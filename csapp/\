@@ -1,0 +1,47 @@
+/**
+** Generate mask indicating leftmost 1 in x. 
+** Assume w=32
+** requirement: at most 15 arithmetic, bit-wise, and logical operations
+** csapp p156 2.66
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+
+extern int isValidInteger(const char * str);
+extern int str2integer(const char * str);
+
+unsigned leftmost_one(unsigned x)
+{
+    unsigned ret = x ^ (x >> 16);
+    ret = ret ^ ( ret >> 8 );
+    ret = ret ^ ( ret >> 4 );
+    ret = ret ^ ( ret >> 2 );
+    ret = ret ^ ( ret >> 1 );
+    ret = 1 & ret;
+    return !ret;
+
+}
+
+int main(int argc, char * argv[])
+{
+    int i = 0;
+    if(argc < 2)
+    {
+        printf("Usage: ./test_02_64 [num]\n for example, ./test_02_64 0xffffffff\n");
+        return -1;
+    }
+    
+    const char * param = argv[1];
+    if(isValidInteger(param))
+    {
+        unsigned num = str2integer(param);
+        printf("Input string = %s, num = %u, even_ones = %d\n", param,  num, even_ones(num));
+    }
+    else
+    {
+        printf("\"%s\" is not a valid integer\n", param);
+    }
+   
+    return 0;
+}
