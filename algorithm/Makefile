@@ -15,13 +15,18 @@ else
 endif
 
 .PHONY: all
-all : list 
+all : list stack
 
 
 list:
 	$(MAKE) -C src/list
 list: 
 
+stack:
+	$(MAKE) -C src/stack
+stack:
+
 .PHONY: clean
 clean:
 	cd src/list && $(MAKE) clean 
+	cd src/stack && $(MAKE) clean
