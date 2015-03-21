@@ -17,7 +17,6 @@ namespace zhaosl
         bool pop(T & value);    // 弹出栈顶内容到 value，成功返回true，失败返回false
         bool top(T & value);   // 获取栈顶内容，空栈时返回false，获取失败返回false
         bool isEmpty();
-        bool isFull();  
 
     };
 }
