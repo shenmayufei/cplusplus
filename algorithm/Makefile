@@ -15,7 +15,7 @@ else
 endif
 
 .PHONY: all
-all : list stack
+all : list stack queue
 
 
 list:
@@ -26,7 +26,12 @@ stack:
 	$(MAKE) -C src/stack
 stack:
 
+queue:
+	$(MAKE) -C src/queue
+queue:
+
 .PHONY: clean
 clean:
 	cd src/list && $(MAKE) clean 
 	cd src/stack && $(MAKE) clean
+	cd src/queue && $(MAKE) clean

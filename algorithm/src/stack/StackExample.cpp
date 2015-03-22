@@ -157,3 +157,28 @@ bool calculatePostfixExpress(const struct Element* postfixExpr, const int length
     }
     return resStack.pop(*result);
 }
+
+bool knap_recursive(int totalWeight, const int * weights, const int num)
+{
+    if(totalWeight== 0) return true;
+    if((totalWeight < 0) || (totalWeight > 0 && num < 1)) return false;
+
+    if(knap_recursive(totalWeight-weights[num-1], weights, num-1))
+    {
+        std::cout << weights[num-1] << std::endl;
+        return true;
+    }
+    else
+    {
+        return knap_recursive(totalWeight, weights, num-1);
+    }
+}
+
+// 背包问题，非递归实现
+bool knap_nonrecur(int totalWeight, const int * weights, const int num)
+{
+    //zhaosl::LinkStack<KnapNode> funcStack;
+    //struct KnapNode tmpNode;
+
+    return true;
+}

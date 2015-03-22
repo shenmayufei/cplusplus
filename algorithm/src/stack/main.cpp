@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
     std::cout << "LinkStack test end\n\n";
 
     std::cout << "Expression transform test start\n";
-    const char* infixExpr = "23 + (34*45)/(5+ 6 + 7)";
+    const char* infixExpr = "23 + (34*45)/(5 + 6 - 7)";
     struct Element * postfixExpr;
     int length, result;
     transformExpression(infixExpr, &postfixExpr, &length); 
@@ -54,6 +54,15 @@ int main(int argc, char* argv[])
     calculatePostfixExpress(postfixExpr, length, &result);
     std::cout << infixExpr << " = " << result << std::endl;
     std::cout << "Expression transform test end\n\n";
+
+    std::cout << "背包问题 start\n";
+    int weights[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    int sum = 40;
+    int num = 9;
+    bool ok = knap_recursive(sum, weights, num);
+    if(ok) std::cout << "sum = " << sum << ", num = " << num << ", weights [1-9], is ok\n";
+    else std::cout << "sum = " << sum << ", num = " << num << ", weights[1-9], not ok\n";
+    std::cout << "背包问题 end\n\n";
 
     std::cout << "Exit Main function\n";
 }
