@@ -34,9 +34,20 @@ string:
 	$(MAKE) -C src/string
 string:
 
+tree:
+	$(MAKE) -C src/tree
+tree:
+
+test:
+	$(MAKE) -C src/test
+test:
+
+
 .PHONY: clean
 clean:
 	cd src/list && $(MAKE) clean 
 	cd src/stack && $(MAKE) clean
 	cd src/queue && $(MAKE) clean
 	cd src/string && $(MAKE) clean
+	cd src/tree && $(MAKE) clean
+	cd src/test && $(MAKE) clean
