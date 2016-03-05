@@ -9,9 +9,9 @@ export BUILD_LIBS =-L$(BUILD_OUT_DIR)  -lz
 $(shell mkdir -p  $(BUILD_OUT_DIR))
 # compiler options
 ifeq ($(BUILD_TYPE), release)
-        export CXX = g++ -fPIC -Wall -O2 -fno-strict-aliasing  -DTIME_OUT_INTERVAL=600 -DMAX_SEND_BUF_SIZE=1073741824 -D XT_STATIC -fexec-charset=GB2312
+        export CXX = g++ -fPIC -Wall -O2 -fno-strict-aliasing  -DTIME_OUT_INTERVAL=600 -DMAX_SEND_BUF_SIZE=1073741824 -std=c++11
 else
-        export CXX = g++ -fPIC -Wall  -g -DDEBUG -fexec-charset=GB2312  -D XT_STATIC -D ORDER2TRADER_SERVICE 
+        export CXX = g++ -fPIC -Wall  -g -DDEBUG -std=c++11
 endif
 
 .PHONY: all
@@ -38,6 +38,10 @@ tree:
 	$(MAKE) -C src/tree
 tree:
 
+hashmap:
+	$(MAKE) -C src/hashmap
+hashmap:
+
 test:
 	$(MAKE) -C src/test
 test:
@@ -50,4 +54,5 @@ clean:
 	cd src/queue && $(MAKE) clean
 	cd src/string && $(MAKE) clean
 	cd src/tree && $(MAKE) clean
+	cd src/hashmap && $(MAKE) clean
 	cd src/test && $(MAKE) clean
