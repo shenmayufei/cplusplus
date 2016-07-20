@@ -3,7 +3,7 @@
 #
 export BUILD_TYPE ?= release
 export BUILD_HOME_DIR = $(shell pwd)
-export BUILD_OUT_DIR  = $(BUILD_HOME_DIR)/bin/$(BUILD_TYPE)/
+export BUILD_OUT_DIR  = $(BUILD_HOME_DIR)/bin/$(BUILD_TYPE)
 export BUILD_INCS = -I/usr/local/include  -I$(BUILD_HOME_DIR)/src/
 export BUILD_LIBS =-L$(BUILD_OUT_DIR)  -lz
 $(shell mkdir -p  $(BUILD_OUT_DIR))
