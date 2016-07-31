@@ -3,3 +3,6 @@ a.out
 *.o
 *.zip
 .vscode
+*.exe
+*.py
+*.java
