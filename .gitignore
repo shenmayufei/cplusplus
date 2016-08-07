@@ -2,4 +2,6 @@ a.out
 *.s
 *.o
 *.zip
+*.rar
 .vscode
+main
