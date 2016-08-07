@@ -1,6 +1,8 @@
 ## 作业1 60分
 1. 分别给出类型Fruit和Apple的类型大小（即对象size），并通过画出二者对象模型图以及你的测试来解释该size的构成原因。
 
+`tips: 该文档使用markdown格式编写，推荐使用Markdown阅读器查看。`
+
 ## 答案
 
 ### 编译、运行
@@ -68,4 +70,6 @@ class Apple: public Fruit{  // inheritates 24 bytes from Fruit (excluding Fruit'
 需要注意的是，编译器会对Apple的成员变量 size 和 type 存放到一起，然后进行padding。 
 
 参考文献：
+
 1. [padding和alignment](http://en.cppreference.com/w/cpp/language/object "alignment")
+2. [Fundamental Types (C++)](https://msdn.microsoft.com/en-us/library/cc953fe1.aspx "fundamental types")
