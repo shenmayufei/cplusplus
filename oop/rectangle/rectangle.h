@@ -6,6 +6,10 @@
 class Shape
 {                   
    int no;
+public:
+  Shape(): no(0) {}
+  Shape(const Shape& o): no(o.no) { }
+  Shape& operator=(const Shape& o) { no = o.no; return *this; };
 };              
 class Point{
   public:
@@ -25,7 +29,7 @@ public:
    Rectangle& operator=(const Rectangle& other);
    ~Rectangle();
 
-   void print();
+   void print() const;
 };
 
 inline
@@ -34,14 +38,15 @@ Rectangle::Rectangle(int w, int h, int x, int y) : width(w), height(h) {
 }
 
 inline 
-Rectangle::Rectangle(const Rectangle& other) {
-  this->width = other.width;
-  this->height = other.height;
-  this->leftUp = new Point(*other.leftUp);
+Rectangle::Rectangle(const Rectangle& other): Shape(other), width(other.width), height(other.height) {
+  if (other.leftUp != nullptr) this->leftUp = new Point(*other.leftUp);
 }
 
 inline 
 Rectangle& Rectangle::operator=(const Rectangle& other) {
+  if (this == &other) return *this;
+
+  Shape::operator=(other);
   this->width = other.width;
   this->height = other.height;
   delete this->leftUp;
@@ -55,7 +60,7 @@ Rectangle::~Rectangle() {
 }
 
 inline 
-void Rectangle::print() {
+void Rectangle::print() const {
   // std::cout << "left point addr: " << this->leftUp << std::endl;
   std::cout << "left up:(" << this->leftUp->x << ", " << this->leftUp->y << "), right bottom:(" << this->leftUp->x + this->width << ", " << this->leftUp->y + this->height << ")" << std::endl;
 }
