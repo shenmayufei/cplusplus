@@ -10,12 +10,13 @@ using namespace std;
 int fLogMemory = 0;      // Perform logging (0=no; nonzero=yes)?
 int cBlocksAllocated = 0;  // Count of blocks allocated.
 
-void * operator new[] (size_t) {
+void * operator new[] (size_t stAllocateBlock) {
     clog << "new[]\n";
-    return 0;
+    return malloc(stAllocateBlock);
 }
-void operator delete[] (void*) {
+void operator delete[] (void* p) {
     clog << "delete[]\n";
+    free(p);
 }
 
 // User-defined operator new.
