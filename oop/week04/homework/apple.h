@@ -2,6 +2,8 @@
 #define _APPLE_H__
 
 #include <iostream>
+// #include <sys/malloc.h> // for mac, or not necessary
+// #include <malloc.h>     // for linux
 #include "fruit.h"
 
 using std::cout;

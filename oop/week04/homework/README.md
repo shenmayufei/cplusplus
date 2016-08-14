@@ -21,6 +21,18 @@ apple.h 和 fruit.h 分别定义了 两个类。 test.cpp 包含了两个测试�
 ## build 
 代码在 linux 和 mac 下均编译且运行通过，windows下没有经过测试。
 
+需要注意的是 malloc.h 的位置 在 linux下和 mac下不同：
+
+```
+// apple.h
+#include <iostream>
+#include <sys/malloc.h> // for mac, 可能需要include
+#include <malloc.h>     // for linux
+```
+
+如果在linux 下编译，需要注释掉 `#include <sys/malloc.h>`；
+如果在mac 下面编译，主要注释掉 `#include <malloc.h>`。
+
 ### test operator new/delete
 测试 operator new 和 operator delete时，需要在main 函数中调用 testOperatorNew() 函数
 
