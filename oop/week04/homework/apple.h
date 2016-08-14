@@ -22,8 +22,8 @@ public:
   void save() {   }
   virtual void process(){   }
 
-  void* operator new( size_t stAllocateBlock );
-  void operator delete( void* pvMem );
+  static void* operator new( size_t stAllocateBlock );
+  static void operator delete( void* pvMem );
 
   friend ostream& operator<<(ostream& os, const Apple& a);
 };

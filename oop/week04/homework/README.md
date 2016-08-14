@@ -1,4 +1,4 @@
-## 请使用 Markdown 编辑器查看（有道云笔记、v2ex、segmentfault等）
+## 请使用 Markdown 编辑器查看（github、有道云笔记、v2ex、segmentfault等）
 
 ## 简介
 作业包括下面几个文件：
@@ -15,6 +15,8 @@ debbydeMBP:homework apple$ tree
 ```
 
 apple.h 和 fruit.h 分别定义了 两个类。 test.cpp 包含了两个测试用例。运行代码请向下看。
+
+注意：这里我重载了 ostream& operator<< ，所以把 print 函数删除了。
 
 ## build 
 代码在 linux 和 mac 下均编译且运行通过，windows下没有经过测试。
