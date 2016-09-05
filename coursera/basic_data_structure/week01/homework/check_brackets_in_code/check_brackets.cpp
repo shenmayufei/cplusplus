@@ -22,24 +22,48 @@ struct Bracket {
     int position;
 };
 
-int main() {
-    std::string text;
-    getline(std::cin, text);
-
+std::string checkBrackets(const std::string text) {
     std::stack <Bracket> opening_brackets_stack;
+    int failedPos = -1;
     for (int position = 0; position < text.length(); ++position) {
         char next = text[position];
 
         if (next == '(' || next == '[' || next == '{') {
-            // Process opening bracket, write your code here
+            opening_brackets_stack.push(Bracket(next, position));
+            continue;
         }
 
         if (next == ')' || next == ']' || next == '}') {
-            // Process closing bracket, write your code here
+            // check empty stack
+            if (opening_brackets_stack.empty()){
+                failedPos = position+1;
+                break;
+            }
+            // get the top element
+            Bracket b = opening_brackets_stack.top();
+            if (b.type == next) {
+                opening_brackets_stack.pop();
+            } else {
+                // top element does not match 
+                failedPos = position + 1;
+                break;
+            }
         }
     }
 
-    // Printing answer, write your code here
+    // if failedPos >= 0, there must be a consistency
+    if (failedPos >= 0) return std::to_string(failedPos);
+    // stack is empty, all brackets self matches; otherwise all "{[(" 
+    if (opening_brackets_stack.empty()) return "Success";
+    
+    Bracket b = opening_brackets_stack.top();
+    return std::to_string(b.position+1);
+}
 
+int main() {
+    std::string text;
+    getline(std::cin, text);
+    std::string res = checkBrackets(text);
+    std::cout << res << std::endl;
     return 0;
 }
