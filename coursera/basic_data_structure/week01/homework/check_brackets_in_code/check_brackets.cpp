@@ -41,7 +41,19 @@ std::string checkBrackets(const std::string text) {
             }
             // get the top element
             Bracket b = opening_brackets_stack.top();
-            if (b.type == next) {
+            char counter;
+            switch(next) {
+                case ')':
+                    counter = '(';
+                    break;
+                case ']':
+                    counter = '[';
+                    break;
+                case '}':
+                    counter = '{';
+                    break;
+            }
+            if (b.type == counter) {
                 opening_brackets_stack.pop();
             } else {
                 // top element does not match 
