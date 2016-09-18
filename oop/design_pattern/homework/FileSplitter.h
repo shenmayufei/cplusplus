@@ -6,17 +6,18 @@
  *
 ********************************************************/
 
-#include<string>  // std::string
+#include <string>  // std::string
+#include <vector>  // std::vector
 
 class FileSplitter {
   std::string m_filePath;
   int m_fileNumber;
 
-  IProgress* m_pIprogress // 抽象通知机制
+  std::vector<IProgress*> m_vIProgress; // 抽象通知机制
 
 public:
-  FileSplitter(const std::string& filePath, int fileNumber, IProgress& iprogress)
-    : m_filePath(filePath), m_fileNumber(fileNumber), m_pIprogress(iprogress) {
+  FileSplitter(const std::string& filePath, int fileNumber )
+    : m_filePath(filePath), m_fileNumber(fileNumber) {
   }
 
   void split() {
@@ -28,11 +29,23 @@ public:
         onProgress(progressValue); 
     }
   }
+
+  void addIProgress(IProgress* ip) {
+    m_vIProgress.push_back(ip);
+  }
+
+  void removeIProgress(IProgress* ip) {
+    // remove ip from m_vIProgress
+    // it's not an efficient implementation, use it for now
+    for(auto ips = m_vIProgress.begin(); ips != m_vIProgress.end(); ips++) {
+      if (ip == *ips) m_vIProgress.erase(ips);
+    }
+  }
   
 protected:
   void onProgress(float value) {  // update progress
-    if (m_pIprogress != nullptr) {
-      m_pIprogress->DoProgress(value);
+    for (auto ip = m_vIProgress.begin(); ip != m_vIProgress.end(); ip++) {
+      (*ip)->DoProgress(value);
     }
   }
 };
