@@ -53,6 +53,13 @@ public:
         std::cout << (was_found ? "yes\n" : "no\n");
     }
 
+    const Node* check(int ind) const {
+        if (ind >= bucket_count) {
+            return nullptr;
+        }
+        return elems[ind];
+    }
+
     void processQuery(const Query& query) {
         if (query.type == "add") {
             int hashCode = hash_func(query.s);
@@ -98,17 +105,16 @@ public:
                 }
                 locPtr = locPtr->next;
             }
+            if (locPtr->next == nullptr) return;
             Node* tmpNode = locPtr->next;
             locPtr->next = tmpNode->next;
             delete tmpNode;
         } else if (query.type == "check" ) {
-            if (query.ind < bucket_count) {
-                Node* curPtr = elems[query.ind];
-                while(curPtr != nullptr) {
-                    std::cout << curPtr->name << " ";
-                    curPtr = curPtr->next;
-                }
-            } 
+            const Node* curPtr = check(query.ind);
+            while(curPtr != nullptr) {
+                std::cout << curPtr->name << " ";
+                curPtr = curPtr->next;
+            }
             std::cout << std::endl;
         }
     }
@@ -122,19 +128,52 @@ public:
 };
 
 int testInfinite() {
-    string types[] = {"add", "find", "delete", "check"};
+    string types[] = {"add", "find", "check", "delete"};
     while(true) {
         size_t bucketCount = rand() % 100 + 3;
         QueryProcessor proc(bucketCount);
         size_t queryCount = rand() % 1000 + 10;
         for(size_t i = 0 ; i < queryCount; i++ ) {
             Query query;
-            query.type = types[rand()%4];
+            int randNum = rand() % 6;
+            if (randNum > 3) randNum = 3;  // 增加 delete 出现的概率
+            query.type = types[randNum];
+            int count = 0;
             if (query.type == "check") {
                 query.ind = rand() % bucketCount;
-            } else {
+            } else if (query.type == "add") {
                 size_t sLen = rand() % 10 + 1;
                 while(sLen-->0) query.s.push_back(rand()%26 + 'a');
+                count++;
+            } else if (query.type == "del" ) {
+                if(rand()%2 == 0) {
+                    size_t sLen = rand() % 10 + 1;
+                    while(sLen-->0) query.s.push_back(rand()%26 + 'a');
+                } else {
+                    // find out one already exists to delete
+                    while(count > 0) { // count ensures there must be one
+                        size_t ind = rand() % bucketCount;
+                        const Node* ptr = proc.check(ind);
+                        if (ptr == nullptr) continue;
+                        query.s = ptr->name;
+                        count--;
+                        break;
+                    }
+                } 
+            } else if (query.type == "find" ) {
+                if(rand()%2 == 0) {
+                    size_t sLen = rand() % 10 + 1;
+                    while(sLen-->0) query.s.push_back(rand()%26 + 'a');
+                } else {
+                    // find out one already exists to delete
+                    while(count > 0) { // count ensures there must be one
+                        size_t ind = rand() % bucketCount;
+                        const Node* ptr = proc.check(ind);
+                        if (ptr == nullptr) continue;
+                        query.s = ptr->name;
+                        break;
+                    }
+                } 
             }
             proc.processQuery(query);
         }    
@@ -144,7 +183,9 @@ int testInfinite() {
 
 int main() {
     std::ios_base::sync_with_stdio(false);
-    // if (testInfinite() != 0) {
+    // if(testInfinite() == 0) {
+    //     std::cout << "test passed" << std::endl;
+    // } else {
     //     std::cout << "test failed" << std::endl;
     // }
     int bucket_count;
