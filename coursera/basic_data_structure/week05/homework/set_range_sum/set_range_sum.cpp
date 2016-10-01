@@ -150,116 +150,43 @@ void insert(int x) {
   Vertex* left = NULL;
   Vertex* right = NULL;
   Vertex* new_vertex = NULL;  
-  // printf("@@@@@@@@before insert root\n");
-  // if (root != NULL) {
-  //   printf("root key:%d, sum:%lld\n", root->key, root->sum);
-  //   if (root->left != NULL) {
-  //     printf("root left key:%d, sum:%lld\n", root->left->key, root->left->sum);
-  //   }
-  // }
   split(root, x, left, right);
   if (right == NULL || right->key != x) {
     new_vertex = new Vertex(x, x, NULL, NULL, NULL);
   }
-  // printf("^^^^^^^^^shall merge insert\n");
-  // if (left != NULL) {
-  //   printf("left, key:%d, sum:%lld\n", left->key, left->sum);
-  // }
-  // if (new_vertex != NULL) {
-  //   printf("new vertex, key:%d, sum:%lld\n", new_vertex->key, new_vertex->sum);
-  // }
-  // if (right != NULL) {
-  //   printf("right, key:%d, sum:%lld\n", right->key, right->sum);
-  // }
-  // printf("^^^^^^^^^^merge insert complelte\n");
-
   root = merge(merge(left, new_vertex), right);
-  // printf("--start--------\ninsert %d, root key:%d, sum: %lld\n", x,root->key, root->sum);
-  // if (root->left != NULL) {
-  //   printf("0000   root left key:%d, left sum:%lld\n", root->left->key, root->left->sum);
-  //   if (root->left->left != NULL) {
-  //     printf("0000   root left left key:%d, left left sum:%lld\n", root->left->left->key, root->left->left->sum);
-  //   }
-  // }
-  // if (root->right != NULL) {
-  //   printf("0000   root right key:%d, right sum:%lld\n", root->right->key, root->right->sum);
-  // }
-  // printf("--end--------\n");
 }
 
-void erase(int x) {
+void erase(int x) {                   
+  // Implement erase yourself
   Vertex* v = find(root, x);
   if (v==NULL || v->key != x) return;
-
-  // if found
-  // update left
-  Vertex* left = v->left;
-  v->left = NULL;
-  if (left != NULL) {
-    left->parent = NULL;
-  }
-  update(left);
-
-  // delete the x, and update right
-  Vertex* right = v->right;
-  delete v;
-  if (right != NULL) {
-    right->parent = NULL;
-    update(right);
-  }
-
+  Vertex* left = NULL;
+  Vertex* middle = NULL;
+  Vertex* right = NULL;
+  split(root, x, left, middle);
+  split(middle, x+1, middle, right);
   root = merge(left, right);
 }
 
 bool find(int x) {  
+  // Implement find yourself
   Vertex* v = find(root, x);
-  if (v == NULL) return false;
-  return v->key == x;
+  if (v==NULL || v->key != x) return false;
+  return true;
 }
 
 long long sum(int from, int to) {
-  // printf("from:%d, to:%d\n", from, to);
-  // if (root != NULL) {
-  //   printf("0000  root key:%d, sum:%lld\n", root->key, root->sum);
-  //   if (root->left != NULL) {
-  //     printf("0000   root left key:%d, left sum:%lld\n", root->left->key, root->left->sum);
-  //   }
-  //   if (root->right != NULL) {
-  //     printf("0000   root right key:%d, right sum:%lld\n", root->right->key, root->right->sum);
-  //   }
-  //   printf("\n");
-  // }
-
-  if (from > to) {
-    int tmp = from;
-    from = to;
-    to = tmp;
-  }
   Vertex* left = NULL;
   Vertex* middle = NULL;
   Vertex* right = NULL;
   split(root, from, left, middle);
-  if (middle == NULL) return 0;
-  // printf("00001   middle key:%d, sum:%lld\n", middle->key, middle->sum);
-  // if (middle->left != NULL) {
-  //   printf("00000001   middle left key:%d, left sum:%lld\n", middle->left->key, middle->left->sum);
-  // }
-  // if (middle->right != NULL) {
-  //   printf("00000001   middle right key:%d, right sum:%lld\n", middle->right->key, middle->right->sum);
-  // }
   split(middle, to + 1, middle, right);
-  if (middle == NULL) return 0;
-  // printf("00002   middle key:%d, sum:%lld\n", middle->key, middle->sum);
-  // if (middle->left != NULL) {
-  //   printf("00003   middle left key:%d, left sum:%lld\n", middle->left->key, middle->left->sum);
-  // }
-  // if (middle->right != NULL) {
-  //   printf("00000001   middle right key:%d, right sum:%lld\n", middle->right->key, middle->right->sum);
-  // }
-  long long result =  middle->sum;
-
-  root = merge(merge(left, middle), right);
-  return result;
+  long long ans = 0;
+  // Complete the implementation of sum
+  if (middle != NULL) ans = middle->sum;
+  root = merge(merge(left, middle), right); 
+  return ans;  
 }
 
 const int MODULO = 1000000001;
