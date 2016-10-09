@@ -71,6 +71,10 @@ public:
   int compute_height() {
     return t->height();
   }
+
+  ~TreeHeight() {
+    delete t;
+  }
 };
 
 int main() {
