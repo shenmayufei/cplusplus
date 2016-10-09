@@ -26,24 +26,31 @@ class Buffer {
 public:
     Buffer(int size):
         size_(size),
+        last_finish_time_(0),
         finish_time_()
     {}
 
     Response Process(const Request &request) {
-        // write your code here
-        while(finish_time_.empty() == false && finish_time_.front() < request.arrival_time) {
+        while(finish_time_.empty() == false && finish_time_.front() <= request.arrival_time) {
             finish_time_.pop();
         }
 
         if (finish_time_.size() == size_) {
             return Response(true, request.arrival_time);
         }
-        Response res(false, finish_time_.back() + 1);
-        finish_time_.push(finish_time_.back() + request.process_time);
+        Response res(false, last_finish_time_);
+        if (last_finish_time_ < request.arrival_time) {
+            res.start_time = request.arrival_time;
+            last_finish_time_ = request.arrival_time + request.process_time;
+        } else {
+            last_finish_time_ += request.process_time;
+        }
+        finish_time_.push(last_finish_time_);
         return res;
     }
 private:
     int size_;
+    int last_finish_time_;
     std::queue <int> finish_time_;
 };
 
