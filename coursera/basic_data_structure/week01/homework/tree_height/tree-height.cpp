@@ -2,28 +2,74 @@
 #include <vector>
 #include <algorithm>
 
+class TreeNode {
+public:
+  TreeNode* child;
+  TreeNode* next;
+  TreeNode() : child(NULL), next(NULL){};
+  TreeNode(TreeNode* child, TreeNode* next): child(child), next(next) {};
+};
+
+class Tree {
+  int root;
+  std::vector<TreeNode*> trees;
+public:
+  Tree(int size) {
+    trees.resize(size);
+    for(int i = 0; i < size; i++) trees[i] = new TreeNode();
+  }
+  ~Tree() {
+    // release memory
+    for(std::vector<TreeNode*>::iterator it = trees.begin(); it != trees.end(); it++) {
+      delete *it;
+    }
+  }
+  void connect(int child, int parent) {
+    if (parent == -1) {
+      root = child;
+      return;
+    }
+    TreeNode* ptrParent = trees[parent];
+    TreeNode* ptrChild = trees[child];
+    ptrChild->next = ptrParent->child;
+    ptrParent->child= ptrChild;
+  }
+
+  int height() {
+    return heightHelper(trees[root]);
+  }
+private:
+  int heightHelper(TreeNode* ptrRoot) {
+    if (ptrRoot == nullptr) return 0;
+    if (ptrRoot->child == nullptr) return 1;
+
+    TreeNode* cur = ptrRoot->child;
+    int max = 0;
+    while(cur != nullptr) {
+      max = std::max(max, heightHelper(cur)); 
+      cur = cur->next;
+    }
+    return max+1;
+  }
+};
+
 class TreeHeight {
   int n;             
-  std::vector<int> parent;
+  Tree* t;
 
 public:
   void read() {
     std::cin >> n;
-    parent.resize(n);
-    for (int i = 0; i < n; i++)
-      std::cin >> parent[i];
+    t = new Tree(n);
+    int parent;
+    for (int i = 0; i < n; i++) {
+      std::cin >> parent;
+      t->connect(i, parent);
+    }
   }
 
   int compute_height() {
-    // Replace this code with a faster implementation
-    int maxHeight = 0;
-    for (int vertex = 0; vertex < n; vertex++) {
-      int height = 0;
-      for (int i = vertex; i != -1; i = parent[i])
-        height++;
-      maxHeight = std::max(maxHeight, height);
-    }
-    return maxHeight;
+    return t->height();
   }
 };
 
