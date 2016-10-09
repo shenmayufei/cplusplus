@@ -31,6 +31,16 @@ public:
 
     Response Process(const Request &request) {
         // write your code here
+        while(finish_time_.empty() == false && finish_time_.front() < request.arrival_time) {
+            finish_time_.pop();
+        }
+
+        if (finish_time_.size() == size_) {
+            return Response(true, request.arrival_time);
+        }
+        Response res(false, finish_time_.back() + 1);
+        finish_time_.push(finish_time_.back() + request.process_time);
+        return res;
     }
 private:
     int size_;
