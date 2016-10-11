@@ -4,23 +4,30 @@
 using std::vector;
 using std::pair;
 
-int reach_helper(vector<vector<int> > &adj, vector<bool> &visited, int x, int y) {
+bool reach_helper(vector<vector<int> > &adj, vector<bool> &visited, int x, int y) {
+  // set x as visited
+  visited[x] = true;
+
+  // if x equals y, return true
+  if (x == y) return true;
+
   const vector<int>& vArr = adj[x];
-  for(std::vector<int>::const_iterator it = vArr.begin(); it != vArr.end(); it++) {
-    if (*it == y) return 1;
+  for(vector<int>::const_iterator it = vArr.begin(); it != vArr.end(); it++) {
+    if (visited[*it]) continue;
+    if (reach_helper(adj, visited, *it, y)) return true;
   }
-  for(std::vector<int>::const_iterator it = vArr.begin(); it != vArr.end(); it++) {
-    if (visited[y]) continue;
-    visited[y] = true;
-    if (reach_helper(adj, visited, *it, y)) return 1;
-  }
-  return 0;
+  return false;
 }
 
 int reach(vector<vector<int> > &adj, int x, int y) {
-  //write your code here
   vector<bool> visited(adj.size(), false);
-  return reach_helper(adj, visited, x, y);
+
+  const vector<int>& vArr = adj[x];
+  for(vector<int>::const_iterator it = vArr.begin(); it != vArr.end(); it++) {
+    if (reach_helper(adj, visited, *it, y)) return 1;
+  }
+
+  return 0;
 }
 
 int main() {
