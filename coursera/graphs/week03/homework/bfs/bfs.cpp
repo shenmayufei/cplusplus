@@ -4,9 +4,30 @@
 
 using std::vector;
 using std::queue;
+using std::pair;
 
 int distance(vector<vector<int> > &adj, int s, int t) {
-  //write your code here
+  vector<bool> visited(adj.size(), false);
+  vector<int> depth(adj.size(), -1);
+  queue<int> q;
+  
+  depth[s] = 0;
+  q.push(s);
+
+  while(q.empty() == false) {
+    auto item = q.front();
+    if (item == t) return depth[item];
+    visited[item] = true;  // set it as visited
+    q.pop();
+    
+    int newDepth = depth[item] + 1;
+    vector<int>& vec = adj[item];
+    for(vector<int>::const_iterator it = vec.begin(); it != vec.end(); it++) {
+      if (visited[*it] == true) continue;
+      depth[*it] = newDepth;
+      q.push(*it);
+    }
+  }
   return -1;
 }
 
