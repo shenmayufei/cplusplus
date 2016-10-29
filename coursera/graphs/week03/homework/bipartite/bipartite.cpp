@@ -5,9 +5,36 @@
 using std::vector;
 using std::queue;
 
+int isBipartiteNode(vector<vector<int> > &adj, vector<int>& colors, int s) {
+  if (colors[1] != -1) return 1;
+
+  colors[s] = 0;
+  queue<int> q;
+  q.push(s);
+
+  while(q.empty() == false) {
+    int newColor = !q.front();
+    q.pop();
+
+    vector<int>& vec = adj[item];
+    for(vector<int>::const_iterator it = vec.begin(); it != vec.end(); it++) {
+      if (colors[*it] != -1) {
+        if (colors[*it] != newColor) return 0; 
+      } else {
+        colors[*it] = newColor;
+        q.push(*it);
+      }
+    }
+  }
+  return 1;
+}
+
 int bipartite(vector<vector<int> > &adj) {
-  //write your code here
-  return -1;
+  vector<int> colors(adj.size(), -1);
+  for (int i = 0; i < adj.size(); i++) {
+    if( isBipartiteNode(adj, colors, i) == 0) return 0;
+  }
+  return 1;
 }
 
 int main() {
