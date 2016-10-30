@@ -13,10 +13,11 @@ int isBipartiteNode(vector<vector<int> > &adj, vector<int>& colors, int s) {
   q.push(s);
 
   while(q.empty() == false) {
-    int newColor = !q.front();
+    int node = q.front();
     q.pop();
 
-    vector<int>& vec = adj[item];
+    int newColor = !colors[node];
+    vector<int>& vec = adj[node];
     for(vector<int>::const_iterator it = vec.begin(); it != vec.end(); it++) {
       if (colors[*it] != -1) {
         if (colors[*it] != newColor) return 0; 
