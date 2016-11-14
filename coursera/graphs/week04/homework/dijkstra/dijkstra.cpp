@@ -23,12 +23,12 @@ int distance(vector<vector<int> > &adj, vector<vector<int> > &cost, int s, int t
   vector<int> dist(adj.size(), -1); // initialize dist
   dist[s] = 0; 
 
-  priority_queue<IntPair> q; // store known distances
+  priority_queue<IntPair, vector<IntPair>, Greater> q; // store known distances
   q.push(std::make_pair(s, dist[s]));
 
   while(q.empty() == false) {
     int idx = q.top().first;
-    // std::cout << "idx: " << idx << ", val: " << dist[idx] << std::endl;
+    // std::cout << "idx: " << idx+1 << ", val: " << dist[idx]<< std::endl;
     q.pop();
     vector<int>& vertices = adj[idx];
     vector<int>& edges = cost[idx];
