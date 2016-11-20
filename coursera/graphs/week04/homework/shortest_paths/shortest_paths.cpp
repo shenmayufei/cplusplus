@@ -33,7 +33,6 @@ void shortest_paths(vector<vector<int> > &adj, vector<vector<int> > &cost, int s
   // O(V*E)
   for(int i = 1; i < dist.size(); i++) {
     if(reachable[i] == false) continue; // reduce complexity
-    int changed = 0;
     for(int u = 0; u < adj.size();u++) {
       if (reachable[u] == false) continue;
       vector<int>& tmp = adj[u];
@@ -41,7 +40,7 @@ void shortest_paths(vector<vector<int> > &adj, vector<vector<int> > &cost, int s
         int v = tmp[k];
         if (dist[v] > dist[u] + cost[u][k])  {
           dist[v] = dist[u] + cost[u][k];
-          prev[v] = u;        
+          prev[v] = u;
         }
       }
     }
@@ -57,20 +56,35 @@ void shortest_paths(vector<vector<int> > &adj, vector<vector<int> > &cost, int s
         dist[v] = dist[u] + cost[u][k];
         shortest[v] = 0; // there no shortest for those
         prev[v] = u;
+        rq.push(v);
       }
     }
   }
 
-  // reverse find negative cycles
-  for(int u = 0; u < adj.size(); u++) {
-    if (reachable[u] == false) continue;
-    if (shortest[u] == 1) continue;
-    int v = prev[u];
-    while(u != v) {
-      shortest[v] = 0;
-      v = prev[v];
+  // use queue to replace reverse finding(which is must faster)
+  while(rq.empty() == false) {
+    int t = rq.front();
+    rq.pop();
+    vector<int>& tmp = adj[t];
+    for(int i = 0; i < tmp.size() ; i++) {
+      int ele = tmp[i];
+      if (shortest[ele] == 1) {
+        shortest[ele] = 0;
+        rq.push(ele);
+      }
     }
   }
+
+  // // reverse find negative cycles
+  // for(int u = 0; u < adj.size(); u++) {
+  //   if (reachable[u] == false) continue;
+  //   if (shortest[u] == 1) continue;
+  //   int v = prev[u];
+  //   while(u != v) {
+  //     shortest[v] = 0;
+  //     v = prev[v];
+  //   }
+  // }
 }
 
 int main() {
