@@ -9,9 +9,9 @@ using std::pair;
 
 void shortest_paths(vector<vector<int> > &adj, vector<vector<int> > &cost, int s, vector<long long> &dist, vector<bool> &reachable, vector<int> &shortest) {
   dist[s] = 0;
-  reachable[s] = 1;
+  reachable[s] = true;
 
-  // find all reachable ones
+  // find all reachable ones, O(V+E)
   queue<int> rq;
   rq.push(s);
   while(rq.empty() == false) {
@@ -22,31 +22,32 @@ void shortest_paths(vector<vector<int> > &adj, vector<vector<int> > &cost, int s
       int ele = tmp[i];
       if (reachable[ele] == false) {
         reachable[ele] = true;
+        dist[ele] = dist[t] + cost[t][i];
         rq.push(ele);
-        dist[ele] = dist[t] + cost[t][i];  // initialize dist
       }
     }
   }
 
   vector<int> prev(adj.size(), -1);
   // run Bellman-Ford algorithm for reachable nodes only
+  // O(V*E)
   for(int i = 1; i < dist.size(); i++) {
+    if(reachable[i] == false) continue; // reduce complexity
+    int changed = 0;
     for(int u = 0; u < adj.size();u++) {
       if (reachable[u] == false) continue;
       vector<int>& tmp = adj[u];
       for (int k = 0; k < tmp.size(); k++) {
         int v = tmp[k];
-        // std::cout << "round " << i+1 << ", u " << u << ", dist[u]:" << dist[u] << ", v:" << v << ", dist[v]:" << dist[v] << ", cost:" << cost[u][k] << std::endl;
         if (dist[v] > dist[u] + cost[u][k])  {
           dist[v] = dist[u] + cost[u][k];
-          prev[v] = u;
+          prev[v] = u;        
         }
-        // std::cout << "round " << i+1 << ", u " << u << ", dist[u]:" << dist[u] << ", v:" << v << ", dist[v]:" << dist[v] << ", cost:" << cost[u][k] << std::endl << std::endl;
       }
     }
   }
 
-  for(int u = 0; u < adj.size();u++) {
+  for(int u = 0; u < adj.size(); u++) {
     if (reachable[u] == false) continue;
     vector<int>& tmp = adj[u];
     for (int k = 0; k < tmp.size(); k++) {
