@@ -8,16 +8,15 @@
 using namespace std;
 
 int const Letters =    4;
-int const NA      =   -1;
 
 struct Node
 {
-	int next [Letters];
+	Node* next [Letters];
 	bool patternEnd;
 
 	Node ()
 	{
-		fill (next, next + Letters, NA);
+		fill (next, next + Letters, (Node*)0);
 		patternEnd = false;
 	}
 };
@@ -34,11 +33,55 @@ int letterToIndex (char letter)
 	}
 }
 
-vector <int> solve (string text, int n, vector <string> patterns)
+vector <int> solve (string text, int n, const vector<string>& patterns)
 {
-	vector <int> result;
+	// build trie tree 
+	Node* t = new Node();
+	for(int i = 0; i < n; i++) {
+		const string& ptn = patterns[i];
+		const int maxIdx = ptn.size()-1;
+		Node* cur = t;
+		for(int j = 0; j < maxIdx; j++) {
+			int idx = letterToIndex(ptn[j]);
+			if (cur->next[idx] == nullptr) {
+				cur->next[idx] = new Node();
+			}
+			cur = cur->next[idx];
+		}
+		int idx = letterToIndex(ptn[maxIdx]);
+		if(cur->next[idx] == nullptr) {
+			cur->next[idx] = new Node();
+		}
+		cur = cur->next[idx];
+		cur->patternEnd = true;
+	}
 
-	// write your code here
+	// match text to patterns
+	vector <int> result;
+	for(int i = 0; i < text.size(); i++) {
+		Node* cur = t;
+		bool isMatch = false;
+		for(int j = i; j < text.size(); j++) {
+			if(cur->patternEnd) {
+				isMatch = true;
+				break;
+			}
+			int idx = letterToIndex(text[j]); 
+			if(cur->next[idx] == nullptr) {
+				break;  // not match
+			}
+			cur = cur->next[idx];
+
+		}
+		if (isMatch == true) {
+			result.push_back(i);
+		} else {
+			if (cur->patternEnd) {
+				// special case: pattern and text are of the same length and matches
+				result.push_back(i);
+			}
+		}
+	}
 
 	return result;
 }
@@ -46,7 +89,7 @@ vector <int> solve (string text, int n, vector <string> patterns)
 int main (void)
 {
 	string t;
-	cin >> text;
+	cin >> t;
 
 	int n;
 	cin >> n;
@@ -58,7 +101,7 @@ int main (void)
 	}
 
 	vector <int> ans;
-	ans = solve (t, n, s);
+	ans = solve (t, n, patterns);
 
 	for (int i = 0; i < (int) ans.size (); i++)
 	{
