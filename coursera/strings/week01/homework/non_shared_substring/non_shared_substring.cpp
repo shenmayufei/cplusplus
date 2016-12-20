@@ -4,7 +4,7 @@
 
 using namespace std;
 
-int const Letters = 5;
+int const Letters = 4;
 
 struct Node {
   int startIndex;
@@ -16,7 +16,7 @@ struct Node {
 	}
 
   bool isLeaf() const {
-    return (next[0] == nullptr && next[1] == nullptr && next[2] == nullptr && next[3] == nullptr && next[4] == nullptr);
+    return (next[0] == nullptr && next[1] == nullptr && next[2] == nullptr && next[3] == nullptr);
   }
 };
 
@@ -133,9 +133,8 @@ string solve (string p, string q)
 {
 	Node* tree = BuildSuffixTree(q);
 	int start = 0;
-	int length = 1;
-	for(int len = 1; len < p.size(); len++) {
-		for(int startIdx = 0; startIdx < p.size() - len; startIdx++) {
+	for(int len = 1; len <= p.size(); len++) {
+		for(int startIdx = 0; startIdx <= p.size() - len; startIdx++) {
 			if (isMatch(tree, q, p, startIdx, len) == false) return p.substr(startIdx, len);
 		}
 	}
