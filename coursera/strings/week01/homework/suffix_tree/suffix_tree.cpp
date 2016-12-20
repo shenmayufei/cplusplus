@@ -48,6 +48,7 @@ Node* BuildSuffixTree(const string& text) {
     int j = i;
     while(true) {
       int idx = letterToIndex(text[j]);
+      // cout << "i:" << i << ", j:" << j << endl;
       // next pointer is null, create a leaf node
       if(cur->next[idx] == nullptr) {
         cur->next[idx] = new Node();
@@ -70,12 +71,13 @@ Node* BuildSuffixTree(const string& text) {
         k++;
         j++;
       }
-      if (k==cur->length)   // '$' ensures that the two sub string both end, or neither end
+      // cout << "i: " << i << ", j:" << j << ", k:" << k << endl;
+      if (j == text.size())   // j == text.size() => all letters match
         break;
-      if (isMatch == true) // matched current branch
+      if (isMatch == true) // match all letters in "cur" Node, but not finish yet
         continue;
 
-      // split
+      // does not match, split "cur" Node, and add a new leaf to it
       Node* tmp = new Node();
       if (cur->isLeaf()) {
         tmp->startIndex = cur->startIndex;
@@ -86,7 +88,7 @@ Node* BuildSuffixTree(const string& text) {
       tmp->length = cur->length - k;
       cur->length = k;
       cur->next[letterToIndex(text[startIdx+k])] = tmp;
-      // cout << "cur start:" << cur->startIndex << ", length:" << cur->length << ", tmp start:" << tmp->startIndex << ", length:" << tmp->length << ", startidx:" << startIdx << ", k:" << k <<endl;
+      // cout << "cur start:" << cur->startIndex << ", length:" << cur->length << ", tmp start:" << tmp->startIndex << ", length:" << tmp->length << ", startidx:" << startIdx << ", k:" << k << ", j:" << j<<endl;
       // add new Node to the branch
       int newNodeIdx = letterToIndex(text[j]);
       cur->next[newNodeIdx] = new Node();
