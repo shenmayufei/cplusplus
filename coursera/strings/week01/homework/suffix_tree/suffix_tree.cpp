@@ -50,7 +50,6 @@ int letterToIndex (char letter)
 // 6. match at leaf node
 Node* BuildSuffixTree(const string& text) {
   Node* t = new Node();
-  cout << "start:" << t->startIndex << ", length:" << t->length << endl;
   for(int i = 0; i < text.size(); i++) {
     Node* cur = t;
     int j = i;
@@ -60,12 +59,12 @@ Node* BuildSuffixTree(const string& text) {
       // next pointer is null, create a leaf node
       // deal with 1 and 3
       if(cur->next[idx] == nullptr) {
-        cout << "just iterate, i:" << i << ", j:" << j << ", start:" << cur->startIndex << ", length:" << cur->length << ", " << std::hex << cur << endl;
+        // cout << "just iterate, i:" << i << ", j:" << j << ", start:" << cur->startIndex << ", length:" << cur->length << ", " << std::hex << cur << endl;
         cur->next[idx] = new Node();
         cur = cur->next[idx];
         cur->startIndex = i;;
         cur->length = text.size() - j;
-        cout << "add, start:" << cur->startIndex << ", length:" << cur->length  << ", " << std::hex << cur << endl << endl;
+        // cout << "add, start:" << cur->startIndex << ", length:" << cur->length  << ", " << std::hex << cur << endl << endl;
         break;
       }
 
@@ -90,7 +89,7 @@ Node* BuildSuffixTree(const string& text) {
       } 
       // else not match because text[k + startIdx] != text[j]
       if (cur->isLeaf()) {
-        cout << "split leaf, i: " << i << ", j: " << j << ", length:" << cur->length << ", " << std::hex << cur << endl;
+        // cout << "split leaf, i: " << i << ", j: " << j << ", length:" << cur->length << ", " << std::hex << cur << endl;
         // split cur Leaf Node to tmp and cur
         Node* tmp = new Node();
         tmp->startIndex = startIdx;
@@ -98,32 +97,32 @@ Node* BuildSuffixTree(const string& text) {
         prev->next[letterToIndex(text[startIdx])] = tmp;
         cur->length -= k;
         tmp->next[letterToIndex(text[startIdx+k])] = cur;
-        cout << "result start:" << tmp->startIndex << ", length:" << tmp->length  << ", addr:" << std::hex << tmp << "; cur start:" << cur->startIndex << ", length:" << cur->length << ", addr:" << cur << endl;
+        // cout << "result start:" << tmp->startIndex << ", length:" << tmp->length  << ", addr:" << std::hex << tmp << "; cur start:" << cur->startIndex << ", length:" << cur->length << ", addr:" << cur << endl;
         // add new Node to tmp
         int newIdx = letterToIndex(text[j]);
         tmp->next[newIdx] = new Node();
         tmp = tmp->next[newIdx];
         tmp->startIndex = i;
         tmp->length = text.size() - j;
-        cout << "add, start:" << tmp->startIndex << ", length:" << tmp->length  << ", isleaf:" << tmp->isLeaf() << ", " << std::hex << tmp << endl << endl;
+        // cout << "add, start:" << tmp->startIndex << ", length:" << tmp->length  << ", isleaf:" << tmp->isLeaf() << ", " << std::hex << tmp << endl << endl;
       } else {
-        cout << "split node, i: " << i << ", j: " << j << ", length:" << cur->length << ", " << std::hex << cur << endl;
+        // cout << "split node, i: " << i << ", j: " << j << ", start:" << cur->startIndex << ", length:" << cur->length << ", " << std::hex << cur << endl;
         // split cur Node to tmp and cur
         Node* tmp = new Node();
         tmp->startIndex = cur->startIndex;
         tmp->length = k;
-        prev->next[tmp->startIndex] = tmp;
+        prev->next[letterToIndex(text[tmp->startIndex])] = tmp;
         cur->startIndex += k;
         cur->length -= k;
         tmp->next[letterToIndex(text[cur->startIndex])] = cur;
-        cout << "result start:" << tmp->startIndex << ", length:" << tmp->length  << ", addr:" << std::hex << tmp << "; cur start:" << cur->startIndex << ", length:" << cur->length << ", addr:" << cur << endl;
+        // cout << "result start:" << tmp->startIndex << ", length:" << tmp->length  << ", addr:" << std::hex << tmp << "; cur start:" << cur->startIndex << ", length:" << cur->length << ", addr:" << cur << endl;
         // add new Node to tmp
         int newIdx = letterToIndex(text[j]);
         tmp->next[newIdx] = new Node();
         tmp = tmp->next[newIdx];
         tmp->startIndex = i;
         tmp->length = text.size() - j;
-        cout << "add, start:" << tmp->startIndex << ", length:" << tmp->length  << ", isleaf:" << tmp->isLeaf() << ", " << std::hex << tmp << endl << endl;
+        // cout << "add, start:" << tmp->startIndex << ", length:" << tmp->length  << ", isleaf:" << tmp->isLeaf() << ", " << std::hex << tmp << endl << endl;
       }
       break;
     }
@@ -133,7 +132,7 @@ Node* BuildSuffixTree(const string& text) {
 
 void ComputeEdges(const string& text, const Node* const t, vector<string>& edges) {
   if (t == nullptr) return;
-  std::cout << "isLeaf:" << t->isLeaf() << ", start:" << t->startIndex << ", length:" << t->length << ", addr:" << std::hex << t << std::endl;
+  // std::cout << "isLeaf:" << t->isLeaf() << ", start:" << t->startIndex << ", length:" << t->length << ", addr:" << std::hex << t << std::endl;
   if (t->isLeaf()) {
     edges.push_back(text.substr(text.size() - t->length, t->length));
   } else {

@@ -16,7 +16,7 @@ trie build_trie(vector<string> & patterns) {
   for(vector<string>::const_iterator pt = patterns.begin(); pt != patterns.end(); pt++) {
     int bidx = 0; // the index of previous node
     for(int i = 0; i < pt->size(); i++) {
-//      std::cout << "t.size():" << t.size() << "pt:" << *pt << ", i:" << i << ", bidx:" << bidx << ", next:" << nextIdx << std::endl;
+    //  std::cout << "t.size():" << t.size() << ", pt:" << *pt << ", i:" << i << ", bidx:" << bidx << ", next:" << nextIdx << std::endl;
       char c = (*pt)[i];
       if (t.size() == bidx) {
         edges ed;
@@ -25,10 +25,11 @@ trie build_trie(vector<string> & patterns) {
         // switch bidx as ed[c]'s value
         bidx = ed[c];
       } else {
-        edges& ed = t[bidx];
+        edges ed = t[bidx];
         map<char, int>::const_iterator it = ed.find(c);
         if (it == ed.end()) {
           ed[c] = nextIdx++;
+          t[bidx] = ed;
           t.push_back(edges());
         }
         // switch bidx as ed[c]'s value
