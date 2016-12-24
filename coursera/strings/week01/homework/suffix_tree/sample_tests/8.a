@@ -1,0 +1,16 @@
+$
+$
+A
+AC$
+AC$
+AC$
+C
+C$
+CGATTTTAC$
+GATTTTAC$
+GATTTTAC$
+T
+T
+T
+TAC$
+TTTTAC$
