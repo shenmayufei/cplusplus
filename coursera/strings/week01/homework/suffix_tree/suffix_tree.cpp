@@ -130,6 +130,14 @@ Node* BuildSuffixTree(const string& text) {
   return t;
 }
 
+void DestroySuffixTree(Node* t) {
+  if (t == nullptr) return;
+  for(int i = 0; i < Letters; i++) {
+    DestroySuffixTree(t->next[i]);
+  }
+  delete t;
+}
+
 void ComputeEdges(const string& text, const Node* const t, vector<string>& edges) {
   if (t == nullptr) return;
   // std::cout << "isLeaf:" << t->isLeaf() << ", start:" << t->startIndex << ", length:" << t->length << ", addr:" << std::hex << t << std::endl;
@@ -151,6 +159,7 @@ vector<string> ComputeSuffixTreeEdges(const string& text) {
   Node* t = BuildSuffixTree(text);
   vector<string> result;
   for(int i = 0; i < Letters; i++) ComputeEdges(text, t->next[i], result);
+  DestroySuffixTree(t);
   return result;
 }
 
