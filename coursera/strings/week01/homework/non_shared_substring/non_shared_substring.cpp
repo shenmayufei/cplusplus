@@ -11,7 +11,7 @@ struct Node {
   int length;
   Node* next[Letters];
 
-  Node (): startIndex(-1) {
+  Node (): startIndex(-1), length(0) {
 		std::fill(next, next + Letters, (Node*)0);
 	}
 
@@ -33,6 +33,10 @@ int letterToIndex (char letter)
 }
 
 // Build a suffix tree of the string text
+// six situations:
+// 1. match at some node
+// 2. extend at some node
+// 3. split and extend at some node
 Node* BuildSuffixTree(const string& text) {
   Node* t = new Node();
   for(int i = 0; i < text.size(); i++) {
@@ -40,106 +44,132 @@ Node* BuildSuffixTree(const string& text) {
     int j = i;
     while(true) {
       int idx = letterToIndex(text[j]);
-      // cout << "i:" << i << ", j:" << j << endl;
-      // next pointer is null, create a leaf node
+      // 1. extend at some node
       if(cur->next[idx] == nullptr) {
         cur->next[idx] = new Node();
         cur = cur->next[idx];
-        cur->startIndex = i;;
+        cur->startIndex = j;
         cur->length = text.size() - j;
         break;
       }
 
       // next pointer is not null
+      Node* prev = cur;
       cur = cur->next[idx];
       int k = 0;
       bool isMatch = true;
-      int startIdx = cur->isLeaf() ? text.size() - cur->length : cur->startIndex;
       while(k < cur->length && j < text.size()) {
-        if(text[k + startIdx] != text[j]) {
+        if(text[k + cur->startIndex] != text[j]) {
           isMatch = false;
           break;
         }
         k++;
         j++;
       }
-      // cout << "i: " << i << ", j:" << j << ", k:" << k << endl;
-      if (j == text.size())   // j == text.size() => all letters in sub string matches
-        break;
 			
-			// sub string does not finish, "cur" finishes
+			// match
       if (isMatch == true) {
-				// match all letters in "cur" Node, but text not finish yet
-				if (cur->isLeaf()) { 
-					// cur->isLeaf() => extend length is ok, no need to create a new Node
-					cur->length += text.size() - j;
-					break;
-				} else {
-					continue;
-				}
+        if (j == text.size()) break;  // match to the end
+        else continue;  // leave matching work to the next round
 			}
 
-      // does not match, split "cur" Node, and add a new leaf to it
+      // does not match, split cur Node to tmp and cur
       Node* tmp = new Node();
-      if (cur->isLeaf()) {
-        tmp->startIndex = cur->startIndex;
-        cur->startIndex = startIdx;
-      } else {
-        tmp->startIndex = startIdx + k;
-      }
-      tmp->length = cur->length - k;
-      cur->length = k;
-      cur->next[letterToIndex(text[startIdx+k])] = tmp;
-      // cout << "cur start:" << cur->startIndex << ", length:" << cur->length << ", tmp start:" << tmp->startIndex << ", length:" << tmp->length << ", startidx:" << startIdx << ", k:" << k << ", j:" << j<<endl;
-      // add new Node to the branch
-      int newNodeIdx = letterToIndex(text[j]);
-      cur->next[newNodeIdx] = new Node();
-      cur = cur->next[newNodeIdx];
-      cur->startIndex = i;
-      cur->length = text.size() - j;
-      break;
+      tmp->startIndex = cur->startIndex;
+      tmp->length = k;
+      prev->next[letterToIndex(text[tmp->startIndex])] = tmp;
+      cur->startIndex += k;
+      cur->length -= k;
+      tmp->next[letterToIndex(text[cur->startIndex])] = cur;
+      // cout << "result start:" << tmp->startIndex << ", length:" << tmp->length  << ", addr:" << std::hex << tmp << "; cur start:" << cur->startIndex << ", length:" << cur->length << ", addr:" << cur << endl;
+      // add new Node to tmp
+      int newIdx = letterToIndex(text[j]);
+      tmp->next[newIdx] = new Node();
+      tmp = tmp->next[newIdx];
+      tmp->startIndex = j;
+      tmp->length = text.size() - j;
     }
   }
   return t;
 }
 
-bool isMatch(Node* t, const string& src, const string& pattern, int start, int length) {
-	if( t == nullptr) return false;
-	Node* cur = t;
-	int incr = 0;
-	while(true) {
-		int idx = letterToIndex(pattern[start + incr]);
-		if (cur->next[idx] == nullptr) {
-			return false;
-		}
-		cur = cur->next[idx];
-		
-		int curStart = cur->startIndex;
-		if (cur->isLeaf()) {
-			curStart = src.size() - cur->length;
-		}
-		int curIncr = 0;
-		while(incr < length && curIncr < cur->length) {
-			if (pattern[start + incr] != src[curStart + curIncr]) return false;
-			incr++;
-			curIncr++;
-		}
-		if (incr == length) return true;
-	}
-	return true;
+void DestroySuffixTree(Node* t) {
+  if (t == nullptr) return;
+  for(int i = 0; i < Letters; i++) {
+    DestroySuffixTree(t->next[i]);
+  }
+  delete t;
+}
+
+string getShortestNonShareString(const string& p, const string& q, const string& prefix, Node* pt, int pStart, Node* qt, int qStart) {
+  if (pt == nullptr || pt->length == 0) {
+    return "";  // match, so return empty string
+  }
+  if (qt == nullptr || qt->length == 0) {
+    string result = prefix + p[pt->startIndex + pStart];
+    // cout << "000 pt:" << std::hex << pt << ", start:" << pt->startIndex << ", length:" << pt->length << ", pstart:" << pStart << ", prefix: " << prefix << ", result:" << result << endl;
+    return result;
+  }
+  assert(pStart < pt->length && qStart < qt->length); // ensure the prerequisite
+  int pCur = pStart;
+  int qCur = qStart;
+  while(pCur < pt->length && qCur < qt->length) {
+    if (p[pt->startIndex + pCur] != q[qt->startIndex + qCur]) {
+      string result = prefix + p.substr(pt->startIndex + pStart, pCur - pStart+1);
+      // cout << "001 pt:" << std::hex << pt << ", start:" << pt->startIndex << ", length:" << pt->length << ", pstart:" << pStart<< ", pCur:" << pCur << ", prefix: " << prefix << ", result:" << result << endl;
+      return result;
+    }
+    pCur++;
+    qCur++;
+  }
+  
+  string newPrefix = prefix + p.substr(pt->startIndex + pStart, pCur - pStart);
+  if (pCur == pt->length) {
+    string result;
+    if (qCur == qt->length ) {  // both pt and qt ends
+      for(int i = 0; i < Letters; i++) {
+        string tmp = getShortestNonShareString(p, q, newPrefix, pt->next[i], 0, qt->next[i], 0);
+        if (tmp.size() == 0) continue;
+        if (result.size() == 0) result = tmp;
+        else if (tmp.size() < result.size()) result = tmp;
+      }
+      // cout << "002.1 pt:" << std::hex << pt << ", start:" << pt->startIndex << ", length:" << pt->length << ", pstart:" << pStart<< ", pCur:" << pCur << ", new prefix: " << newPrefix << ", result:" << result << endl;
+    } else { // current pt ends, but qt not
+      for(int i = 0; i < Letters; i++) {
+        string tmp = getShortestNonShareString(p, q, newPrefix, pt->next[i], 0, qt, qCur);
+        if (tmp.size() == 0) continue;
+        if (result.size() == 0) result = tmp;
+        else if (tmp.size() < result.size()) result = tmp;
+      }
+      // cout << "002.2 pt:" << std::hex << pt << ", start:" << pt->startIndex << ", length:" << pt->length << ", pstart:" << pStart<< ", pCur:" << pCur << ", new prefix: " << newPrefix << ", result:" << result << endl;
+    }
+
+    return result;
+  }
+
+  // qt ends, but pt not
+  int nextCharIndex = letterToIndex(p[pt->startIndex + pCur]);
+  string result = getShortestNonShareString(p, q, newPrefix, pt, pCur, qt->next[nextCharIndex], 0);
+  // cout << "003 pt:" << std::hex << pt << ", start:" << pt->startIndex << ", length:" << pt->length << ", pstart:" << pStart<< ", pCur:" << pCur << ", new prefix: " << newPrefix << ", result:" << result << endl;
+  return result;
 }
 
 string solve (string p, string q)
 {
-	Node* tree = BuildSuffixTree(q);
-	int start = 0;
-	for(int len = 1; len <= p.size(); len++) {
-		for(int startIdx = 0; startIdx <= p.size() - len; startIdx++) {
-			if (isMatch(tree, q, p, startIdx, len) == false) return p.substr(startIdx, len);
-		}
-	}
+  Node* pt = BuildSuffixTree(p);
+	Node* qt = BuildSuffixTree(q);
 
-	return "";
+  string result;
+  for(int i = 0; i < Letters; i++) {
+    string tmp = getShortestNonShareString(p, q, "", pt->next[i], 0, qt->next[i], 0);
+    if (tmp.size() == 0) continue;
+    if (result.size() == 0) result = tmp;
+    else if (tmp.size() < result.size()) result = tmp;
+  }
+  
+  DestroySuffixTree(pt);
+  DestroySuffixTree(qt);
+	return result;
 }
 
 int main (void)
