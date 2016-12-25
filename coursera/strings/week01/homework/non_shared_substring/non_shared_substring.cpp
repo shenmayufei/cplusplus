@@ -88,6 +88,7 @@ Node* BuildSuffixTree(const string& text) {
       tmp = tmp->next[newIdx];
       tmp->startIndex = j;
       tmp->length = text.size() - j;
+      break;
     }
   }
   return t;
