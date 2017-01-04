@@ -10,10 +10,22 @@ using std::string;
 using std::vector;
 
 string BWT(const string& text) {
-  string result = "";
+  vector<string> strArr;
+  int arrLen = text.size();
+  strArr.reserve(arrLen);
+  for(int i = 0; i < arrLen; i++) {
+    strArr.push_back(text.substr(i, string::npos) + text.substr(0, i));
+  }
+  std::stable_sort(strArr.begin(), strArr.end(), std::less<string>());
 
-  // write your code here
+  string result;
+  result.reserve(arrLen);
 
+  for(int i = 0; i < strArr.size() ; i++) {
+    // cout << strArr[i] << endl;
+    result.push_back(strArr[i][arrLen-1]);
+  }
+  
   return result;
 }
 
