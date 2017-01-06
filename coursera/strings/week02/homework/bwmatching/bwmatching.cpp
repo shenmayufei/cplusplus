@@ -23,7 +23,32 @@ using std::vector;
 void PreprocessBWT(const string& bwt, 
                    map<char, int>& starts, 
                    map<char, vector<int> >& occ_count_before) {
-  // Implement this function yourself
+  // initialize occ_count_before
+  string charSet = "$ACGT";
+  for(int i = 0; i < charSet.size(); i++) {
+    occ_count_before[charSet[i]] = vector<int>(bwt.size(), 0);
+  }
+
+  char c = bwt[0];
+  vector<int>& vec = occ_count_before[c];
+  vec[0] = 1;
+
+  for(int i = 1; i < bwt.size(); i++) {
+    char c = bwt[i];
+
+    // update occ_count_before according to bwt
+    for(map<char, vector<int> >::iterator vIt = occ_count_before.begin(); vIt != occ_count_before.end(); vIt++) {
+      if (vIt->first == bwt[i]) vIt->second[i] = vIt->second[i-1] + 1;
+      else vIt->second[i] = vIt->second[i-1];
+    }
+  }
+
+  string sorted = bwt;
+  std::sort(sorted.begin(), sorted.end(), std::less<char>());
+  for(int i = 0; i < sorted.size(); i++) {
+    map<char, int>::const_iterator it = starts.find(sorted[i]);
+    if (it == starts.end()) starts[sorted[i]] = i;
+  }
 }
 
 // Compute the number of occurrences of string pattern in the text
@@ -33,7 +58,20 @@ int CountOccurrences(const string& pattern,
                      const string& bwt, 
                      const map<char, int>& starts, 
                      const map<char, vector<int> >& occ_count_before) {
-  // Implement this function yourself
+  int top = 0;
+  int bottom = bwt.size() - 1;
+  int ptIndex = pattern.size() - 1;
+  while(top <= bottom) {
+    if (ptIndex < 0) return bottom - top + 1;
+
+    char lastLetter = pattern[ptIndex--];
+    map<char, int>::const_iterator firstOccIt = starts.find(lastLetter);
+    if (firstOccIt == starts.end()) return 0;
+    map<char, vector<int> >::const_iterator vecIt = occ_count_before.find(lastLetter);
+    const vector<int>& vec = vecIt->second;
+    top = firstOccIt->second + vec[top];
+    bottom = firstOccIt->second + vec[bottom+1] - 1;
+  }
   return 0;
 }
      
