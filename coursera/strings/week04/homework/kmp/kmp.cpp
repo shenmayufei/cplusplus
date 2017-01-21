@@ -11,8 +11,21 @@ using std::vector;
 // vector with all positions in the text (starting from 0) where 
 // the pattern starts in the text.
 vector<int> find_pattern(const string& pattern, const string& text) {
+  int border = 0;
+  string t = pattern + "$" + text;
+  vector<int> s(t.size(), 0);
+  for(int i = 1; i < t.size(); i++) {
+    while(border > 0 && t[i] != t[border]) border = s[border-1];
+    if (t[i] != t[border]) border = 0;
+    else border += 1;
+    s[i] = border;
+  }
+
   vector<int> result;
-  // Implement this function yourself
+  int smax = pattern.size();
+  for(int i = smax+1; i < t.size(); i++) {
+    if (smax == s[i]) result.push_back(i-smax*2);
+  }
   return result;
 }
 
