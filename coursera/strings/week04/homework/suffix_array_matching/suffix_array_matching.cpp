@@ -123,30 +123,31 @@ vector<int> FindOccurrences(const string& pattern, const string& text, const vec
   // character in suffix_array, for fast query
   vector<int> counts(CharNumber, 0);
   for(int i = 0; i < suffix_array.size(); i++) counts[indexOfChar(text[suffix_array[i]])] ++;
-  for(int j = 1; j < counts.size(); j++) counts[j] += counts[j-1];
   
-  vector<int> firstIdxes(CharNumber, 0);
-  for(int i = 1; i < counts.size(); i++) {
-    firstIdxes[i] = counts[i-1];
+  vector<int> firstIdxes(counts.begin(), counts.end());
+  for(int j = 1; j < firstIdxes.size(); j++) {
+    firstIdxes[j] += firstIdxes[j-1];
   }
+  for(int j = firstIdxes.size() - 1; j > 0; j--) firstIdxes[j] = firstIdxes[j-1];
+  firstIdxes[0] = 0;
 
-  // // std::cout << "step 1, finish get char counts and indexes\n";
+  // std::cout << "step 1, finish get char counts and indexes\n";
+  // std::cout << "suffix_array.size(): " << suffix_array.size() << std::endl;
 
   if (pattern.size() == 0) return vector<int>();
   char c = pattern[0];
   int idx = indexOfChar(c);
   int start = firstIdxes[idx];
-  int count = counts[idx];
+  int end = firstIdxes[idx] + counts[idx];
 
-  if (count == 0) return vector<int>();
+  if (end-start == 0) return vector<int>();
 
   int arrLen = text.size();
 
   vector<int> result;
-  for(int offset = 0; offset < count; offset++) {
-    int idx = offset + start;
+  for(int idx = start; idx < end; idx++) {
     int startIndex = suffix_array[idx];
-    // // std::cout << "idx: " << idx << ", start index:" << startIndex << std::endl;
+    // std::cout << "start:" << start << ", end:" << end << ", idx: " << idx << ", start index:" << startIndex << std::endl;
     if (pattern.size() > arrLen + 1 - startIndex) continue;  // cannot be equal
     bool match = true;
     for(int i = 0; i < pattern.size(); i++) {
