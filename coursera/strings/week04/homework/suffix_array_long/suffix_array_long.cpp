@@ -40,9 +40,11 @@ vector<int> SortCharacters(const string& text) {
   for(int j = 1; j < CharNumber; j++) count[j] += count[j-1];
   for(int i = arrLen - 1; i >= 0; i--) {
     char c = text[i];
-    count[c] --;
-    order[count[c]] = i;
+    count[indexOfChar(c)] --;
+    order[count[indexOfChar(c)]] = i;
   }
+  // for(int i = 0; i < arrLen; i++) cout << order[i] << ", ";
+  // cout << endl;
   return order;
 }
 
