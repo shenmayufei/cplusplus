@@ -34,8 +34,8 @@ public:
         /* Note that we first append a forward edge and then a backward edge,
          * so all forward edges are stored at even indices (starting from 0),
          * whereas backward edges are stored at odd indices in the list edges */
-        Edge forward_edge = {from, to, capacity, 0};
-        Edge backward_edge = {to, from, 0, 0};
+        Edge forward_edge = {from, to, capacity};
+        Edge backward_edge = {to, from, 0};
         graph[from].push_back(edges.size());
         edges.push_back(forward_edge);
         graph[to].push_back(edges.size());
@@ -103,16 +103,16 @@ int bfs(FlowGraph& graph, vector<size_t>& paths, int from, int to) {
 class MaxMatching {
  public:
   void Solve() {
-    vector<vector<bool>> adj_matrix = ReadData();
+    vector<vector<bool> > adj_matrix = ReadData();
     vector<int> matching = FindMatching(adj_matrix);
     WriteResponse(matching);
   }
 
  private:
-  vector<vector<bool>> ReadData() {
+  vector<vector<bool> > ReadData() {
     int num_left, num_right;
     cin >> num_left >> num_right;
-    vector<vector<bool>> adj_matrix(num_left, vector<bool>(num_right));
+    vector<vector<bool> > adj_matrix(num_left, vector<bool>(num_right));
     for (int i = 0; i < num_left; ++i)
       for (int j = 0; j < num_right; ++j) {
         int bit;
@@ -134,24 +134,28 @@ class MaxMatching {
     cout << "\n";
   }
 
-  vector<int> FindMatching(const vector<vector<bool>>& adj_matrix) {
+  vector<int> FindMatching(const vector<vector<bool> >& adj_matrix) {
     // Replace this code with an algorithm that finds the maximum
     // matching correctly in all cases.
     int num_left = adj_matrix.size();
     int num_right = adj_matrix[0].size();
 
     // build the Graph
-    FlowGraph graph(2+num_left+num_right);
+    int vertexNum = 2 + num_left + num_right;
+    FlowGraph graph(vertexNum);
+    for (int i = 0; i < num_left; ++i) graph.add_edge(0, i+1, 1);
     for (int i = 0; i < num_left; ++i)
       for (int j = 0; j < num_right; ++j)
         if (adj_matrix[i][j]) {
           graph.add_edge(i+1, num_left+j+1, 1);
         }
+    for (int j = 0; j < num_right; ++j) 
+      graph.add_edge(j+num_left+1, vertexNum - 1, 1);
 
     // find the max flow Graph^f
     while(true){
         vector<size_t> paths;
-        int thisFlow = bfs(graph, paths, from, to);
+        int thisFlow = bfs(graph, paths, 0, graph.size() -1);
         if (thisFlow == 0) break;
         for(vector<size_t>::const_iterator it = paths.begin(); it != paths.end(); it++) {
             graph.update_capacity(*it, thisFlow);
@@ -166,7 +170,7 @@ class MaxMatching {
       const vector<size_t>& edgeIDs = graph.get_ids(v);
       for(vector<size_t>::const_iterator it = edgeIDs.begin(); it != edgeIDs.end(); it++) {
         const FlowGraph::Edge& ed = graph.get_edge(*it);
-        if (ed.to >= 1 && ed.to <= num_left) matching[ed.to-1] = v - num_left - 1;
+        if (ed.to >= 1 && ed.to <= num_left && ed.capacity>0) matching[ed.to-1] = v - num_left - 1;
       }
     }
     
