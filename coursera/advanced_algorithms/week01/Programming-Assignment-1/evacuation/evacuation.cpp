@@ -60,6 +60,10 @@ public:
         edges[id].flow += flow;
         edges[id ^ 1].flow -= flow;
     }
+    void update_capacity(size_t id, int flow) {
+        edges[id].capacity -= flow;
+        edges[id ^ 1].capacity += flow;
+    }
 };
 
 FlowGraph read_data() {
@@ -109,7 +113,6 @@ int bfs(FlowGraph& graph, vector<int>& paths, int from, int to) {
         to = ed.from;
     }
     
-    std::reverse(path.begin(), path.end());
     return flow;
 }
 
@@ -119,11 +122,12 @@ int max_flow(FlowGraph& graph, int from, int to) {
     while(true){
         // calculate this flow
         vector<size_t> paths;
-        int thisFlow = bfs(graph, paths, to);
+        int thisFlow = bfs(graph, paths, from, to);
+        if (thisFlow == 0) return flow;
         flow+= thisFlow;
-        // paths is the edges of path in reversed order, thisFlow is the max flow available
-        
-        // @todo: add the flow to Graph
+        for(vector<size_t>::const_iterator it = paths.begin(); it != paths.end(); it++) {
+            graph.update_capacity(*it, thisFlow);
+        }
     }
 
     return flow;
