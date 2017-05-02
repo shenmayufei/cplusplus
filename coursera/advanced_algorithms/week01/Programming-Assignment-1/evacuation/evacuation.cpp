@@ -80,20 +80,21 @@ FlowGraph read_data() {
 
 // dfs do a breadth-first search to FlowGraph graph, from vertex "from", to vertex
 // "to", if found vertext to, return flow
-int bfs(FlowGraph& graph, vector<int>& paths, int from, int to) {
+int bfs(FlowGraph& graph, vector<size_t>& paths, int from, int to) {
     queue<size_t> vertexIDs;
     vector<bool> visited(graph.size(), false);
     vector<int> parentEdges(graph.size(), -1);
     vertexIDs.push(from);
+    visited[from] = true;
     bool found = false;
     while(!vertexIDs.empty() && !found) {
-        size_t vertexID = vertextIDs.front();
+        size_t vertexID = vertexIDs.front();
         vertexIDs.pop();
-        visited[vertexID] = true;
         const vector<size_t> edgeIDs = graph.get_ids(vertexID);
         for(vector<size_t>::const_iterator it = edgeIDs.begin(); it != edgeIDs.end(); it++) {
-            const Edge& ed = graph.get_edge(*it);
-            if (ed.capacity == 0) continue;
+            const FlowGraph::Edge& ed = graph.get_edge(*it);
+            if (ed.capacity <= 0 || visited[ed.to]) continue;
+            visited[ed.to] = true;
             parentEdges[ed.to] = *it;  // set parentEdges[v] as edge ID which lead to it
             if (ed.to == to) {
                 found = true;
@@ -104,13 +105,14 @@ int bfs(FlowGraph& graph, vector<int>& paths, int from, int to) {
     }
 
     if (!found) return 0; // cannot find a valid flow
-    int flow = numeric_limit<int>::max();
+    int flow = numeric_limits<int>::max();
     while(to != from) {
         size_t edgeID = parentEdges[to];
-        const Edge& ed = graph.get_edge(edgeID);
+        const FlowGraph::Edge& ed = graph.get_edge(edgeID);
         if (flow > ed.capacity) flow = ed.capacity;
-        path.push_back(edgeID);
+        paths.push_back(edgeID);
         to = ed.from;
+        // std::cout << "from:" << from << ", to:" << to << ", edge:" << edgeID << ", edge.from:" << ed.from << ", edge.to:"<<ed.to <<  std::endl;
     }
     
     return flow;
