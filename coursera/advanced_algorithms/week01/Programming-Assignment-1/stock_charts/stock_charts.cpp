@@ -13,7 +13,7 @@ class FlowGraph {
 public:
   struct Edge{
     int from, to, capacity;
-  }
+  };
 
 private:
   // List of all - forward and backward - edges
@@ -35,12 +35,12 @@ public:
   }
 
   // vertex number
-  size_t vertex_number() const {
-    graph.size();
+  size_t size() const {
+    return graph.size();
   }
 
   // edge id list
-  const vector<size_t>& get_edge_ids(int from) const {
+  const vector<size_t>& get_ids(int from) const {
     return graph[from];
   }
 
@@ -49,7 +49,7 @@ public:
     return edges[id];
   }
 
-  void update_capcity(size_t id, int flow) {
+  void update_capacity(size_t id, int flow) {
     edges[id].capacity -= flow;
     edges[id ^ 1].capacity += flow;
   }
@@ -57,10 +57,10 @@ public:
 
 // bfs does a breadth-first search to FlowGraph graph
 // from vertex "from", to vertex "to"
-bool bfs(FlowGraph& fp, int from, int to) {
+bool bfs(FlowGraph& fg, int from, int to) {
   queue<size_t> vIDs;
-  vector<bool> visited(fp.size(), false);
-  vector<int> parentEdges(fp.size(), -1);
+  vector<bool> visited(fg.size(), false);
+  vector<int> parentEdges(fg.size(), -1);
   bool found = false;
   
   vIDs.push(from);
@@ -70,7 +70,7 @@ bool bfs(FlowGraph& fp, int from, int to) {
     vIDs.pop();
     const vector<size_t> edgeIDs = fg.get_ids(vID);
     for(vector<size_t>::const_iterator it = edgeIDs.begin(); it != edgeIDs.end(); it++) {
-      const FlowGraph::Edge& ed = graph.get_edge(*it);
+      const FlowGraph::Edge& ed = fg.get_edge(*it);
       if (ed.capacity <= 0 || visited[ed.to]) continue;
       visited[ed.to] = true;
       parentEdges[ed.to] = *it;  // set parentEdges[v] as edge ID which lead to it
@@ -84,7 +84,8 @@ bool bfs(FlowGraph& fp, int from, int to) {
 
   while(parentEdges[to] != -1) {
     size_t eID = parentEdges[to];
-    fp.update_capacity(eID, 1);
+    fg.update_capacity(eID, 1);
+    to = eID;
   }
 
   return found;
@@ -93,16 +94,16 @@ bool bfs(FlowGraph& fp, int from, int to) {
 class StockCharts {
  public:
   void Solve() {
-    vector<vector<int>> stock_data = ReadData();
+    vector<vector<int> > stock_data = ReadData();
     int result = MinCharts(stock_data);
     WriteResponse(result);
   }
 
  private:
-  vector<vector<int>> ReadData() {
+  vector<vector<int> > ReadData() {
     int num_stocks, num_points;
     cin >> num_stocks >> num_points;
-    vector<vector<int>> stock_data(num_stocks, vector<int>(num_points));
+    vector<vector<int> > stock_data(num_stocks, vector<int>(num_points));
     for (int i = 0; i < num_stocks; ++i)
       for (int j = 0; j < num_points; ++j) {
         cin >> stock_data[i][j];
@@ -114,7 +115,7 @@ class StockCharts {
     cout << result << "\n";
   }
 
-  int MinCharts(const vector<vector<int>>& stock_data) {
+  int MinCharts(const vector<vector<int> >& stock_data) {
     // concept:
     // 1. build a DAG (n vertices)
     // 2. build bipartite graph based on the DAG
@@ -134,9 +135,9 @@ class StockCharts {
     for(int i = 0; i < stock_count - 1; i++) {
       for(int j = i+1; j < stock_count; j++) {
         if (compare(stock_data[i], stock_data[j])) {
-          dag.add_edge(i+1, j+stock_count+1, 1);
+          bp.add_edge(i+1, j+stock_count+1, 1);
         } else if (compare(stock_data[j], stock_data[i])) {
-          dag.add_edge(j+1, i+stock_count+1, 1);
+          bp.add_edge(j+1, i+stock_count+1, 1);
         }
       }
     }
