@@ -4,6 +4,7 @@ a.out
 *.zip
 *.rar
 .vscode
+.vs
 *.exe
 *.py
 *.java

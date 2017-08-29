@@ -2,10 +2,93 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include <queue>
 
 using std::vector;
 using std::cin;
 using std::cout;
+using std::queue;
+
+class FlowGraph {
+public:
+  struct Edge{
+    int from, to, capacity;
+  }
+
+private:
+  // List of all - forward and backward - edges
+  vector<Edge> edges;
+
+  // These adjacency lists store only indices of edges in the edges list
+  vector<vector<size_t> > graph;
+
+public:
+  explicit FlowGraph(size_t n): graph(n) {}
+
+  void add_edge(int from, int to, int capacity){
+    Edge forward_edge = {from, to, capacity};
+    Edge backward_edge = {to, from, 0};
+    graph[from].push_back(edges.size());
+    edges.push_back(forward_edge);
+    graph[to].push_back(edges.size());
+    edges.push_back(backward_edge);
+  }
+
+  // vertex number
+  size_t vertex_number() const {
+    graph.size();
+  }
+
+  // edge id list
+  const vector<size_t>& get_edge_ids(int from) const {
+    return graph[from];
+  }
+
+  // get edge by id
+  const Edge& get_edge(size_t id) const {
+    return edges[id];
+  }
+
+  void update_capcity(size_t id, int flow) {
+    edges[id].capacity -= flow;
+    edges[id ^ 1].capacity += flow;
+  }
+};
+
+// bfs does a breadth-first search to FlowGraph graph
+// from vertex "from", to vertex "to"
+bool bfs(FlowGraph& fp, int from, int to) {
+  queue<size_t> vIDs;
+  vector<bool> visited(fp.size(), false);
+  vector<int> parentEdges(fp.size(), -1);
+  bool found = false;
+  
+  vIDs.push(from);
+  visited[from] = true;
+  while(!vIDs.empty() && !found) {
+    size_t vID = vIDs.front();
+    vIDs.pop();
+    const vector<size_t> edgeIDs = fg.get_ids(vID);
+    for(vector<size_t>::const_iterator it = edgeIDs.begin(); it != edgeIDs.end(); it++) {
+      const FlowGraph::Edge& ed = graph.get_edge(*it);
+      if (ed.capacity <= 0 || visited[ed.to]) continue;
+      visited[ed.to] = true;
+      parentEdges[ed.to] = *it;  // set parentEdges[v] as edge ID which lead to it
+      if (ed.to == to) {
+        found = true;
+        break;
+      }
+      vIDs.push(ed.to);
+    }
+  }
+
+  while(parentEdges[to] != -1) {
+    size_t eID = parentEdges[to];
+    fp.update_capacity(eID, 1);
+  }
+
+  return found;
+}
 
 class StockCharts {
  public:
@@ -32,35 +115,44 @@ class StockCharts {
   }
 
   int MinCharts(const vector<vector<int>>& stock_data) {
-    // Replace this incorrect greedy algorithm with an
-    // algorithm that correctly finds the minimum number
-    // of charts on which we can put all the stock data
-    // without intersections of graphs on one chart.
+    // concept:
+    // 1. build a DAG (n vertices)
+    // 2. build bipartite graph based on the DAG
+    // 3. find the maximum flow (residual graph)
+    // 4. count the number of edges from Source vertex in residual graph
 
-    int num_stocks = stock_data.size();
-    // Vector of charts; each chart is a vector of indices of individual stocks.
-    vector<vector<int>> charts;
-    for (int i = 0; i < stock_data.size(); ++i) {
-      bool added = false;
-      for (auto& chart : charts) {
-        bool can_add = true;
-        for (int index : chart)
-          if (!compare(stock_data[i], stock_data[index]) &&
-              !compare(stock_data[index], stock_data[i])) {
-            can_add = false;
-            break;
-          }
-        if (can_add) {
-          chart.push_back(i);
-          added = true;
-          break;
+    // Actually,while coding, we do not need the DAG
+    // We could build bipartite graph directly
+
+    size_t stock_count = stock_data.size();
+    
+    // step 1. construct bipartite graph
+    size_t bn = 2 + 2 * stock_count;
+    FlowGraph bp(bn);
+    for (size_t i = 1; i <= stock_count; i++) bp.add_edge(0, i, 1);
+    for (size_t i = stock_count; i < bn-1; i++) bp.add_edge(i, bn-1, 1);
+    for(int i = 0; i < stock_count - 1; i++) {
+      for(int j = i+1; j < stock_count; j++) {
+        if (compare(stock_data[i], stock_data[j])) {
+          dag.add_edge(i+1, j+stock_count+1, 1);
+        } else if (compare(stock_data[j], stock_data[i])) {
+          dag.add_edge(j+1, i+stock_count+1, 1);
         }
       }
-      if (!added) {
-        charts.emplace_back(vector<int>{i});
-      }
     }
-    return charts.size();
+
+    // step 2. get the residual graph (with maximum flow)
+    while(bfs(bp, 0, bn-1));
+
+    // step 3. count the number of edges from Source Vertex in residual network
+    int result = 0;
+    const vector<size_t>& eIDs = bp.get_ids(0);
+    for(vector<size_t>::const_iterator it = eIDs.begin(); it < eIDs.end(); it++) {
+      const FlowGraph::Edge& ed = bp.get_edge(*it);
+      if (ed.capacity > 0) result++;
+    }
+
+    return result;
   }
 
   bool compare(const vector<int>& stock1, const vector<int>& stock2) {
