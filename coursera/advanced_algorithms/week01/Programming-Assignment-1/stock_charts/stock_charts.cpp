@@ -49,6 +49,12 @@ public:
     return edges[id];
   }
 
+  // void print_edges() const {
+  //   for(size_t i = 0; i < edges.size(); i++) {
+  //     cout << i << ": {" << edges[i].from << "->" << edges[i].to << " " << edges[i].capacity <<  "}\n";
+  //   }
+  // }
+
   void update_capacity(size_t id, int flow) {
     edges[id].capacity -= flow;
     edges[id ^ 1].capacity += flow;
@@ -82,10 +88,16 @@ bool bfs(FlowGraph& fg, int from, int to) {
     }
   }
 
+  if(!found) return false;
+
+  // int gcount = 0;
+  // cout << "call bfs\n";
+  // fg.print_edges();
   while(parentEdges[to] != -1) {
     size_t eID = parentEdges[to];
+    const FlowGraph::Edge& ed = fg.get_edge(eID);
     fg.update_capacity(eID, 1);
-    to = eID;
+    to = ed.from;
   }
 
   return found;
@@ -131,7 +143,7 @@ class StockCharts {
     size_t bn = 2 + 2 * stock_count;
     FlowGraph bp(bn);
     for (size_t i = 1; i <= stock_count; i++) bp.add_edge(0, i, 1);
-    for (size_t i = stock_count; i < bn-1; i++) bp.add_edge(i, bn-1, 1);
+    for (size_t i = stock_count+1; i < bn-1; i++) bp.add_edge(i, bn-1, 1);
     for(int i = 0; i < stock_count - 1; i++) {
       for(int j = i+1; j < stock_count; j++) {
         if (compare(stock_data[i], stock_data[j])) {
