@@ -8,6 +8,12 @@ const int PRECISION = 20;
 
 typedef vector<vector<double>> matrix;
 
+/****
+ * the problem cannot be solved by duality (complementary slackness) after many tries,
+ * so I choose to solve it via moving between vertices of a polytope, 
+ * namely simplex
+ */
+
 
 /********************************************* 
  * Solve the equation
@@ -163,6 +169,15 @@ pair<int, vector<double>> solve_diet_problem(
     vector<double> b, 
     vector<double> c) {
 
+  // we need add extra rows to A and b, because all x cannot be negative
+  // think about the following code, we know that the problem cannot be 
+  // sloved by duality (complementary slackness)
+  for(size_t i = 0; i < m; i++) {
+    vector<double> tmp(m, 0);
+    tmp[i] = -1;
+    A.push_back(tmp);
+    b.push_back(0);
+  }
   // solve the dual equation
   print("A:", A);
   matrix dualA = transpose(n, m, A);
