@@ -1,3 +1,6 @@
+/*
+   g++ -o main energy_values.cpp -std=c++11
+*/
 #include <cmath>
 #include <iostream>
 #include <vector>
