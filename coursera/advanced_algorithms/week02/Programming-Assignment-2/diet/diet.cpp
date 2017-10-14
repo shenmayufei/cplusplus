@@ -4,6 +4,8 @@
 #include <cstdio>
 using namespace std;
 
+const int PRECISION = 20;
+
 typedef vector<vector<double>> matrix;
 
 
@@ -33,33 +35,33 @@ struct Position {
 // the most ideal condition is row==column (whose value is not zero, probably one)
 Position SelectPivotElement(
   const Matrix &a, 
-  vector <bool> &used_rows, 
-  vector <bool> &used_columns) {
+  std::vector <bool> &used_rows, 
+  std::vector <bool> &used_columns) {
+    size_t n = used_rows.size();
+    size_t m = used_columns.size();
+
     Position pivot_element(0, 0);
-    while (used_rows[pivot_element.row])
+    while (used_rows[pivot_element.row] && pivot_element.row < n)
         ++pivot_element.row;
-    while (used_columns[pivot_element.column])
+    while (used_columns[pivot_element.column] && pivot_element.column < m)
         ++pivot_element.column;
 
-    size_t m = used_rows.size();
-    size_t n = used_columns.size();
-    if (pivot_element.row == m || pivot_element.column == n)
+
+    if (pivot_element.row == n || pivot_element.column == m)
         return pivot_element;  // invalid position
 
-    size_t i = pivot_element.column;
-    while(i < n){
-        if (a[pivot_element.row][i] != 0) {
-            pivot_element.column = i;
+    for(size_t i = pivot_element.column; i < n; i++){
+        if (a[i][pivot_element.column] != 0) {
+            pivot_element.row = i;
             return pivot_element;
         }
-        i++;
     }
     return pivot_element;
 }
 
 // After swapping, row==column
 // the first free element could probably NOT zero, but also possibly is zero
-void SwapLines(Matrix &a, Column &b, vector <bool> &used_rows, Position &pivot_element) {
+void SwapLines(Matrix &a, Column &b, std::vector <bool> &used_rows, Position &pivot_element) {
     std::swap(a[pivot_element.column], a[pivot_element.row]);
     std::swap(b[pivot_element.column], b[pivot_element.row]);
     std::swap(used_rows[pivot_element.column], used_rows[pivot_element.row]);
@@ -68,11 +70,12 @@ void SwapLines(Matrix &a, Column &b, vector <bool> &used_rows, Position &pivot_e
 
 void ProcessPivotElement(Matrix &a, Column &b, const Position &pivot_element) {
     if (a[pivot_element.row][pivot_element.column] == 0) return;
-    size_t n = b.size();
+    size_t n = a.size();
+    size_t m = a[0].size();
 
     // set this row pivot value as ONE
     double baseVal = a[pivot_element.row][pivot_element.column];
-    for(size_t j = pivot_element.column; j< n; j++) a[pivot_element.row][j] /= baseVal;
+    for(size_t j = pivot_element.column; j< m; j++) a[pivot_element.row][j] /= baseVal;
     b[pivot_element.row] /= baseVal;
 
     // update other rows
@@ -80,23 +83,24 @@ void ProcessPivotElement(Matrix &a, Column &b, const Position &pivot_element) {
         if (i==pivot_element.row) continue;
         if (a[i][pivot_element.column]==0) continue;
         double multBy = a[i][pivot_element.column];
-        for(size_t j = pivot_element.column; j < n; j++)
+        for(size_t j = pivot_element.column; j < m; j++)
             a[i][j] -= multBy * a[pivot_element.row][j];
         b[i] -= multBy * b[pivot_element.row];
     }
 }
 
-void MarkPivotElementUsed(const Position &pivot_element, vector <bool> &used_rows, vector <bool> &used_columns) {
+void MarkPivotElementUsed(const Position &pivot_element, std::vector <bool> &used_rows, std::vector <bool> &used_columns) {
     used_rows[pivot_element.row] = true;
     used_columns[pivot_element.column] = true;
 }
 
 Column SolveEquation(Matrix& a, Column b) {
-    int size = a.size();
+    size_t n = a.size();
+    size_t m = a[0].size();
 
-    vector <bool> used_columns(size, false);
-    vector <bool> used_rows(size, false);
-    for (int step = 0; step < size; ++step) {
+    std::vector <bool> used_columns(m, false);
+    std::vector <bool> used_rows(n, false);
+    for (int step = 0; step < n; ++step) {
         Position pivot_element = SelectPivotElement(a, used_rows, used_columns);
         // std::cout << "row:" << pivot_element.row << ", column:" << pivot_element.column 
         // << ", value:" << a[pivot_element.row][pivot_element.column] << ", b:" << b[pivot_element.row] <<  std::endl;
@@ -115,21 +119,43 @@ Column SolveEquation(Matrix& a, Column b) {
 }
 
 
+
 /********************************************* 
  * Solve the equation
  * end
  *********************************************/
 
 matrix transpose(int n, int m, const matrix& mx) {
-  matrix newM(m, vector<double>(m, 0));
+  matrix newM(m, vector<double>(n, 0));
   for(int i = 0; i < n; i++) {
     for(int j = 0; j < m; j++) {
-      newM[m][n] = mx[n][m];
+      newM[j][i] = mx[i][j];
     }
   }
-  return mx;
+  return newM;
 }
 
+
+void printRow(const string name, const vector<double>& v) {
+  cout << name << "-" << v.size() << ": ";
+  for(int i = 0; i < v.size(); i++) cout << v[i] << " ";
+  cout << endl;
+}
+
+void print(const string name, const matrix &A) {
+  int n = A.size();
+  int m = A[0].size();
+  cout << name << " " << n << "X" << m << endl;
+  std::cout.precision(PRECISION);
+  for (int i = 0; i < n; i++){
+    cout << "[";
+    for(int j = 0; j < m; j++) cout << A[i][j] << " ";
+    cout << "]\n";
+  }
+}
+
+// currently, only Y is calculated, which is not we expect
+// we expect X (however, it's just a draft, we choose to forgive)
 pair<int, vector<double>> solve_diet_problem(
     int n, 
     int m, 
@@ -138,17 +164,23 @@ pair<int, vector<double>> solve_diet_problem(
     vector<double> c) {
 
   // solve the dual equation
+  print("A:", A);
   matrix dualA = transpose(n, m, A);
+  print("dual of A:", dualA);
+  printRow("c: ", c);
   vector<double> y = SolveEquation(dualA, c);
+  print("dual of A:", dualA);
+  printRow("y", y);
+  cout << "solve_diet_problem 0" << endl;
   // check the result
-  for(int i = 0; i < m; i++) {
-    for(int j = i; j< n; j++) {
-      if(dualA[i][j]==0) {
-        if (y[i]==0) return {1, vector<double>(m,0)};
-        else return {-1, vector<double>(m,0)};
-      }
+  for(int i = 0; i < m && i < n; i++) {
+    if(dualA[i][i]==0) {
+      cout << "solve_diet_problem 1, i=" << i << endl;
+      if (y[i]==0) return {1, vector<double>(m,0)};
+      else return {-1, vector<double>(m,0)};
     }
   }
+  cout << "solve_diet_problem 3, m="<< m << ", n=" << n << endl;
   if (m<n) return {1, vector<double>(m,0)};
   else return {0, y};
 }

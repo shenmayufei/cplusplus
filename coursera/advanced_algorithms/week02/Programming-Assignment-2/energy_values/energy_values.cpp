@@ -93,7 +93,7 @@ void ProcessPivotElement(Matrix &a, Column &b, const Position &pivot_element) {
 
     // set this row pivot value as ONE
     double baseVal = a[pivot_element.row][pivot_element.column];
-    for(size_t j = pivot_element.column; j< n; j++) a[pivot_element.row][j] /= baseVal;
+    for(size_t j = pivot_element.column; j< m; j++) a[pivot_element.row][j] /= baseVal;
     b[pivot_element.row] /= baseVal;
 
     // update other rows
