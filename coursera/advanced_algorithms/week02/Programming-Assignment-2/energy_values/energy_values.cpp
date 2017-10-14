@@ -1,3 +1,7 @@
+/*
+   g++ -o main energy_values.cpp -std=c++11
+   ./main < tests/03
+*/
 #include <cmath>
 #include <iostream>
 #include <vector>
@@ -51,24 +55,24 @@ Position SelectPivotElement(
   const Matrix &a, 
   std::vector <bool> &used_rows, 
   std::vector <bool> &used_columns) {
+    size_t n = used_rows.size();
+    size_t m = used_columns.size();
+
     Position pivot_element(0, 0);
-    while (used_rows[pivot_element.row])
+    while (used_rows[pivot_element.row] && pivot_element.row < n)
         ++pivot_element.row;
-    while (used_columns[pivot_element.column])
+    while (used_columns[pivot_element.column] && pivot_element.column < m)
         ++pivot_element.column;
 
-    size_t m = used_rows.size();
-    size_t n = used_columns.size();
-    if (pivot_element.row == m || pivot_element.column == n)
+
+    if (pivot_element.row == n || pivot_element.column == m)
         return pivot_element;  // invalid position
 
-    size_t i = pivot_element.column;
-    while(i < n){
-        if (a[pivot_element.row][i] != 0) {
-            pivot_element.column = i;
+    for(size_t i = pivot_element.column; i < n; i++){
+        if (a[i][pivot_element.column] != 0) {
+            pivot_element.row = i;
             return pivot_element;
         }
-        i++;
     }
     return pivot_element;
 }
@@ -84,7 +88,8 @@ void SwapLines(Matrix &a, Column &b, std::vector <bool> &used_rows, Position &pi
 
 void ProcessPivotElement(Matrix &a, Column &b, const Position &pivot_element) {
     if (a[pivot_element.row][pivot_element.column] == 0) return;
-    size_t n = b.size();
+    size_t n = a.size();
+    size_t m = a[0].size();
 
     // set this row pivot value as ONE
     double baseVal = a[pivot_element.row][pivot_element.column];
@@ -96,7 +101,7 @@ void ProcessPivotElement(Matrix &a, Column &b, const Position &pivot_element) {
         if (i==pivot_element.row) continue;
         if (a[i][pivot_element.column]==0) continue;
         double multBy = a[i][pivot_element.column];
-        for(size_t j = pivot_element.column; j < n; j++)
+        for(size_t j = pivot_element.column; j < m; j++)
             a[i][j] -= multBy * a[pivot_element.row][j];
         b[i] -= multBy * b[pivot_element.row];
     }
@@ -110,11 +115,12 @@ void MarkPivotElementUsed(const Position &pivot_element, std::vector <bool> &use
 Column SolveEquation(Equation equation) {
     Matrix &a = equation.a;
     Column &b = equation.b;
-    int size = a.size();
+    size_t n = a.size();
+    size_t m = a[0].size();
 
-    std::vector <bool> used_columns(size, false);
-    std::vector <bool> used_rows(size, false);
-    for (int step = 0; step < size; ++step) {
+    std::vector <bool> used_columns(m, false);
+    std::vector <bool> used_rows(n, false);
+    for (int step = 0; step < n; ++step) {
         Position pivot_element = SelectPivotElement(a, used_rows, used_columns);
         // std::cout << "row:" << pivot_element.row << ", column:" << pivot_element.column 
         // << ", value:" << a[pivot_element.row][pivot_element.column] << ", b:" << b[pivot_element.row] <<  std::endl;
@@ -145,3 +151,4 @@ int main() {
     PrintColumn(solution);
     return 0;
 }
+
