@@ -1,5 +1,6 @@
 /*
    g++ -o main energy_values.cpp -std=c++11
+   ./main < tests/03
 */
 #include <cmath>
 #include <iostream>
