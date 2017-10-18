@@ -298,6 +298,9 @@ pair<int, vector<double>> solve_diet_problem(
     // printRow("new res:", newB);
     vector<double> res(m, 0);
     for(size_t i = 0; i < m; i++) {
+      // expected form: canonical form
+      // every unknown variable is known
+      // every unknown variable is >= 0; otherwise no solution
       if (newB[i+1] < 0) return {-1, vector<double>(m, 0)};
       res[i] = newB[i+1];
     }
