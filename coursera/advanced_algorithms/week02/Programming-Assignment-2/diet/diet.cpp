@@ -282,33 +282,26 @@ pair<int, vector<double>> solve_diet_problem(
   if (all_non_negative) {
     // solve the equation
     for(size_t j = 1; j < newM; j++) {
+      vector<double> tmp(newM, 0);
       if(newA[0][j] > 0) {
-        for(size_t i = 0; i < m; i++) {
-          vector<double> tmp(newM, 0);
-          for(size_t k = 1; k < newM;k++) {
-            if(newA[0][k] != 0) {
-              newA[0][k] = 0;
-              tmp[k] = 1;
-            }
-          }
-          newA.push_back(tmp);
-          newB.push_back(0);
-        }
-
-        // print("new A:", newA);
-        // printRow("new B:", newB);
-
-        SolveEquation(newA, newB);
-        // print("new A:", newA);
-        // printRow("new res:", newB);
-        vector<double> res(m, 0);
-        for(size_t i = 0; i < m; i++) {
-          if (newB[i+1] < 0) return {-1, vector<double>(m, 0)};
-          res[i] = newB[i+1];
-        }
-        return {0, res};
+          newA[0][j] = 0;
+          tmp[j] = 1;
       }
+      newA.push_back(tmp);
+      newB.push_back(0);
     }
+    // print("new A:", newA);
+    // printRow("new B:", newB);
+
+    SolveEquation(newA, newB);
+    // print("new A:", newA);
+    // printRow("new res:", newB);
+    vector<double> res(m, 0);
+    for(size_t i = 0; i < m; i++) {
+      if (newB[i+1] < 0) return {-1, vector<double>(m, 0)};
+      res[i] = newB[i+1];
+    }
+    return {0, res};
   }
 
   // some are negative, leading to Infinity
