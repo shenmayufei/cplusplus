@@ -141,9 +141,9 @@ void SolveEquation(matrix& a, vector<double>& b) {
         ProcessPivotElement(a, b, pivot_element);
         MarkPivotElementUsed(pivot_element, used_rows, used_columns);
 
-        cout << "step " << step << endl;
-        printAb("A b:", a, b);
-        cout << endl;
+        // cout << "step " << step << endl;
+        // printAb("A b:", a, b);
+        // cout << endl;
     }
 }
  /********************************************* 
@@ -221,9 +221,9 @@ void SimplexSolve(matrix& A, vector<double>& b) {
 
     size_t count = 0;
     while(true) {
-      cout << "round " << ++count << ":" << endl;
-      print(" A:", A);
-      printRow("new b: ", b);
+      // cout << "round " << ++count << ":" << endl;
+      // print(" A:", A);
+      // printRow("new b: ", b);
       Position pivot_element = SimplexSelectPivotElement(A, b, used_rows, used_columns);
       if(pivot_element.column==0) break;  // terminate: all coefficients are nonnegative or meet loop
       if(pivot_element.row==0) break; // terminate: no positive coefficients for the rest rows (unbounded value) or meet loop
@@ -281,7 +281,6 @@ pair<int, vector<double>> solve_diet_problem(
   }
   if (all_non_negative) {
     // solve the equation
-    // @todo: the SolveEquation cannot handle when a col is all ZERO, I need to fix the bug
     for(size_t j = 1; j < newM; j++) {
       if(newA[0][j] > 0) {
         for(size_t i = 0; i < m; i++) {
@@ -296,12 +295,12 @@ pair<int, vector<double>> solve_diet_problem(
           newB.push_back(0);
         }
 
-        print("new A:", newA);
-        printRow("new B:", newB);
+        // print("new A:", newA);
+        // printRow("new B:", newB);
 
         SolveEquation(newA, newB);
-        print("new A:", newA);
-        printRow("new res:", newB);
+        // print("new A:", newA);
+        // printRow("new res:", newB);
         vector<double> res(m, 0);
         for(size_t i = 0; i < m; i++) {
           if (newB[i+1] < 0) return {-1, vector<double>(m, 0)};
@@ -310,9 +309,9 @@ pair<int, vector<double>> solve_diet_problem(
         return {0, res};
       }
     }
-  } else {
-    // @todo: other case, need checking
   }
+
+  // some are negative, leading to Infinity
   return {1, vector<double>(m,0)};
 }
 
