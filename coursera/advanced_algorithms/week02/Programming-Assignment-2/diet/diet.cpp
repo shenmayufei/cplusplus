@@ -35,6 +35,19 @@ void print(const string name, const matrix &A) {
   }
 }
 
+
+void printAb(const string name, const matrix &A, const vector<double>& b) {
+  int n = A.size();
+  int m = A[0].size();
+  cout << name << " " << n << "X" << m << endl;
+  std::cout.precision(PRECISION);
+  for (int i = 0; i < n; i++){
+    cout << "[";
+    for(int j = 0; j < m; j++) cout << A[i][j] << " ";
+    cout << "] " << b[i] << "\n";
+  }
+}
+
 struct Position {
     Position(int column, int row):
         column(column),
@@ -83,9 +96,10 @@ Position SelectPivotElement(
 // After swapping, row==column
 // the first free element could probably NOT zero, but also possibly is zero
 void SwapLines(matrix &a, vector<double> &b, std::vector <bool> &used_rows, Position &pivot_element) {
-    std::swap(a[pivot_element.column], a[pivot_element.row]);
-    std::swap(b[pivot_element.column], b[pivot_element.row]);
-    std::swap(used_rows[pivot_element.column], used_rows[pivot_element.row]);
+    if(a[pivot_element.row][pivot_element.column]) {
+        std::swap(a[pivot_element.column], a[pivot_element.row]);
+        std::swap(b[pivot_element.column], b[pivot_element.row]);
+    }
     pivot_element.row = pivot_element.column;
 }
 
@@ -115,20 +129,22 @@ void MarkPivotElementUsed(const Position &pivot_element, std::vector <bool> &use
     used_columns[pivot_element.column] = true;
 }
 
-vector<double> SolveEquation(matrix a, vector<double> b) {
+void SolveEquation(matrix& a, vector<double>& b) {
     size_t n = a.size();
     size_t m = a[0].size();
 
     std::vector <bool> used_columns(m, false);
     std::vector <bool> used_rows(n, false);
-    for (int step = 0; step < n; ++step) {
+    for (int step = 0; step < m && step < n; ++step) {
         Position pivot_element = SelectPivotElement(a, used_rows, used_columns);
         SwapLines(a, b, used_rows, pivot_element);
         ProcessPivotElement(a, b, pivot_element);
         MarkPivotElementUsed(pivot_element, used_rows, used_columns);
-    }
 
-    return b;
+        cout << "step " << step << endl;
+        printAb("A b:", a, b);
+        cout << endl;
+    }
 }
  /********************************************* 
  * SolveEquation end
@@ -161,9 +177,8 @@ Position SimplexSelectPivotElement(
     // select row (which is most easily overflowed as the variable increases)
     double min_div = numeric_limits<double>::max();
     for(size_t i = 1; i < n; i++) {
-      if (a[i][p_col] <= 0 || b[i] < 0) continue;  // not satisfactory
+      if (a[i][p_col] <= 0) continue;  // not satisfactory
       if (used_rows[i]) continue;  // meet loop
-      if (b[i] == 0) return Position(p_col, i);
       double tmp = b[i] / a[i][p_col];
       if (tmp < min_div) {
         min_div = tmp;
@@ -248,7 +263,11 @@ pair<int, vector<double>> solve_diet_problem(
   for(size_t i = 0; i < n; i++) newB[i+1] = b[i];
   /*** end expanding ***/
 
-  // use Guassian elimination to find replace all variables whose coefficient is negative (because we want the maximum)
+  
+  // use Guassian elimination to get the canonical form 
+  // otherwise the algorithm SimplexSolve does not work for tests/36 (all coefficient is non-negative)
+  SolveEquation(newA, newB);
+  // find replace all variables whose coefficient is negative (because we want the maximum)
   SimplexSolve(newA, newB);
 
   // check the results
@@ -265,13 +284,30 @@ pair<int, vector<double>> solve_diet_problem(
     // @todo: the SolveEquation cannot handle when a col is all ZERO, I need to fix the bug
     for(size_t j = 1; j < newM; j++) {
       if(newA[0][j] > 0) {
-        for(size_t i = 0; i < newN; i++) newA[i][j] = 0; // set the coefficients as ZERO
-        vector<double> resSet = SolveEquation(newA, newB);
+        for(size_t i = 0; i < m; i++) {
+          vector<double> tmp(newM, 0);
+          for(size_t k = 1; k < newM;k++) {
+            if(newA[0][k] != 0) {
+              newA[0][k] = 0;
+              tmp[k] = 1;
+            }
+          }
+          newA.push_back(tmp);
+          newB.push_back(0);
+        }
+
         print("new A:", newA);
-        printRow("new res:", resSet);
+        printRow("new B:", newB);
+
+        SolveEquation(newA, newB);
+        print("new A:", newA);
+        printRow("new res:", newB);
         vector<double> res(m, 0);
-        for(size_t i = 0; i < m; i++) res[i] = resSet[i+1];
-        return {1, res};
+        for(size_t i = 0; i < m; i++) {
+          if (newB[i+1] < 0) return {-1, vector<double>(m, 0)};
+          res[i] = newB[i+1];
+        }
+        return {0, res};
       }
     }
   } else {
