@@ -147,7 +147,7 @@ void SolveEquation(matrix& a, vector<double>& b) {
         ProcessPivotElement(a, b, pivot_element);
         MarkPivotElementUsed(pivot_element, used_rows, used_columns);
 
-        // cout << "step " << step << endl;
+        // cout << "SolveEquation step " << step << endl;
         // printAb("A b:", a, b);
         // cout << endl;
     }
@@ -227,9 +227,8 @@ void SimplexSolve(matrix& A, vector<double>& b) {
 
     size_t count = 0;
     while(true) {
-      // cout << "round " << ++count << ":" << endl;
-      // print(" A:", A);
-      // printRow("new b: ", b);
+      // cout << "SimplexSolve round " << ++count << ":" << endl;
+      // printAb(" A b:", A, b);
       Position pivot_element = SimplexSelectPivotElement(A, b, used_rows, used_columns);
       if(pivot_element.column==0) break;  // terminate: all coefficients are nonnegative or meet loop
       if(pivot_element.row==0) break; // terminate: no positive coefficients for the rest rows (unbounded value) or meet loop
@@ -299,6 +298,16 @@ pair<int, vector<double>> solve_diet_problem(
     // print("new A:", newA);
     // printRow("new B:", newB);
 
+    // if any element in c is zero, the unknown value is set as ZERO as the optimal
+    for(size_t i = 0; i < m; i++) {
+      if (c[i] == 0) {
+        vector<double> tmp(newM, 0);
+        tmp[i+1] = 1;
+        newA.push_back(tmp);
+        newB.push_back(0);
+      }
+    }
+  
     SolveEquation(newA, newB);
     // print("new A:", newA);
     // printRow("new res:", newB);
