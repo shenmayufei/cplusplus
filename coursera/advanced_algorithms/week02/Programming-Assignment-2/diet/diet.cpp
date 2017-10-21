@@ -13,6 +13,12 @@ typedef vector<vector<double>> matrix;
  * so I choose to solve it via moving between vertices of a polytope, 
  * namely simplex
  * Reference: https://en.wikipedia.org/wiki/Simplex_algorithm
+ * 
+ * Appended at Oct 21st, 2017: I found out that Problem 3 is the same as this problem,
+ * but with a larger scale(1 <= n,m <= 100), which shocks me.
+ * Perhaps my previous judgement (this problem cannot be solved by duality) is wrong.
+ * I will try to use duality to solve the same problem.
+ * I need to investigate and compare the performance of simplex and duality methods first.
  */
 
 

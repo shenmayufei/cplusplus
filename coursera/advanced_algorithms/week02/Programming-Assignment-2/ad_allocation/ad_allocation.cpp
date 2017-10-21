@@ -2,6 +2,15 @@
 #include <iostream>
 #include <vector>
 #include <cstdio>
+
+/***
+ * This problem has the same inputs and outputs.  
+ * The only difference is that scale of data sets.
+ * For this problem, matrix A is of 1 <= n, m <= 100. (col, row)
+ * which is much larger (10x) than Problem 2.  
+ * I will try Duality method to solve the problem.
+ ***/
+
 using namespace std;
 
 typedef vector<vector<double>> matrix;
