@@ -116,6 +116,7 @@ Column SolveEquation(Equation equation) {
     Matrix &a = equation.a;
     Column &b = equation.b;
     size_t n = a.size();
+    if(n==0) return b;
     size_t m = a[0].size();
 
     std::vector <bool> used_columns(m, false);
