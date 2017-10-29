@@ -184,7 +184,7 @@ Position SimplexSelectPivotElement(
     double min_div = numeric_limits<double>::max();
     for(size_t i = row_start; i < n; i++) {
       if (a[i][p_col] <= 0) continue;  // not satisfactory
-      if (b[i] < 0) continue;
+      if (b[i] < 0) continue;  // allow degeneration (ZERO)
       double tmp = b[i] / a[i][p_col];
       if (tmp < min_div) {
         min_div = tmp;
