@@ -171,7 +171,8 @@ Position SimplexSelectPivotElement(
 
     // select column (coefficient is negative, and most negetive)
     for(size_t i = row_start; i < m; i++) {
-      if (a[0][i] >= 0) continue; // not satisfactory
+      // why -0.001, not ZERO, refer to tests/45
+      if (a[0][i] >= -0.001) continue; // not satisfactory
       if (!found){ 
         p_col = i;
         found = true;
@@ -372,6 +373,17 @@ pair<matrix, vector<double> > solve_phase_i(
     cout << "Phase I, after solve:" << endl;
     printAb("A, b:", newA, newB);
 
+    // check feasibility,  
+    // if artificial variables are still in the basis, 
+    // there is no feasible solution
+    if (newB.size() - n == 2) {
+      bool no_zero = true;
+      for(size_t i = 0; i < n; i++) {
+        if (newA[0][2 + m + n + i] < 0.001 && newA[0][2+m+n+i] > -0.001) no_zero = false;
+      }
+      if (!no_zero) return {newA, newB};
+    }
+
     // remove artificial variables in newA and newB
     int newN2 = n+1;
     int newM2 = 1 + m + n;
@@ -399,6 +411,10 @@ pair<int, vector<double>> solve_diet_problem(
   matrix newA = res.first;
   vector<double> newB = res.second;
   printAb("phase I result: ", newA, newB);
+
+  // artificial still in basis
+  if (newA.size() == n + 2) return {-1, vector<double>(m, 0)};
+
   cout << "newB.size()-n=" << newB.size() -n  << ", n=" << n << endl << endl; 
   int ret_code = SimplexSolve(newA, newB, newB.size() - n);
   printAb("phase II result: ", newA, newB);
