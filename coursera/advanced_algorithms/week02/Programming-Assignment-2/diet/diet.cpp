@@ -163,13 +163,14 @@ Position SimplexSelectPivotElement(
   int n,
   int m,
   const matrix &a, 
-  const vector<double>& b) {
+  const vector<double>& b,
+  size_t row_start) {
     bool found = false;
     size_t p_row = 0;
     size_t p_col = 0;
 
     // select column (coefficient is negative, and most negetive)
-    for(size_t i = 1; i < m; i++) {
+    for(size_t i = row_start; i < m; i++) {
       if (a[0][i] >= 0) continue; // not satisfactory
       if (!found){ 
         p_col = i;
@@ -181,9 +182,9 @@ Position SimplexSelectPivotElement(
 
     // select row (which is most easily overflowed as the variable increases)
     double min_div = numeric_limits<double>::max();
-    for(size_t i = 1; i < n; i++) {
+    for(size_t i = row_start; i < n; i++) {
       if (a[i][p_col] <= 0) continue;  // not satisfactory
-      if (b[i] <= 0) continue;
+      if (b[i] < 0) continue;
       double tmp = b[i] / a[i][p_col];
       if (tmp < min_div) {
         min_div = tmp;
@@ -233,13 +234,13 @@ bool SimplexProcessPivotElement(matrix &a, vector<double> &b, const Position &pi
 // -1, infeasible, no solution
 // 0, bounded solution
 // 1, infinity
-int SimplexSolve(matrix& A, vector<double>& b) {
+int SimplexSolve(matrix& A, vector<double>& b, size_t row_start) {
     size_t n = A.size();
     size_t m = A[0].size();
 
     size_t count = 0;
     while(true) {
-      Position pivot_element = SimplexSelectPivotElement(n, m, A, b);
+      Position pivot_element = SimplexSelectPivotElement(n, m, A, b, row_start);
       if(pivot_element.column==0) return 0;  // terminate: all coefficients are nonnegative or meet loop
       if(pivot_element.row==0) return 1; // terminate: no positive coefficients for the rest rows -> infinity
 
@@ -338,7 +339,7 @@ pair<matrix, vector<double> > solve_phase_i(
     printAb("A, b:", newA, newB);
 
     // solve the phase I problem
-    SimplexSolve(newA, newB);
+    SimplexSolve(newA, newB, newB.size() - n);
     cout << "Phase I, after solve:" << endl;
     printAb("A, b:", newA, newB);
 
@@ -370,7 +371,7 @@ pair<int, vector<double>> solve_diet_problem(
   vector<double> newB = res.second;
   printAb("phase I result: ", newA, newB);
 
-  int ret_code = SimplexSolve(newA, newB);
+  int ret_code = SimplexSolve(newA, newB, newB.size() - n);
   if (ret_code != 0) return {ret_code, newB}; // fix infinity problem (tests/03)
   
   cout << endl;
