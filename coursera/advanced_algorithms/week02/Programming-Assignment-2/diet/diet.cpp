@@ -14,11 +14,8 @@ typedef vector<vector<double>> matrix;
  * namely simplex
  * Reference: https://en.wikipedia.org/wiki/Simplex_algorithm
  * 
- * Appended at Oct 21st, 2017: I found out that Problem 3 is the same as this problem,
- * but with a larger scale(1 <= n,m <= 100), which shocks me.
- * Perhaps my previous judgement (this problem cannot be solved by duality) is wrong.
- * I will try to use duality to solve the same problem.
- * I need to investigate and compare the performance of simplex and duality methods first.
+ * Phase I: find a feasible solution of the original prolem, according to extended problem
+ * Phase II: find the basic feasible solution
  */
 
 
@@ -149,7 +146,6 @@ void SolveEquation(matrix& a, vector<double>& b) {
 
         // cout << "SolveEquation step " << step << endl;
         // printAb("A b:", a, b);
-        // cout << endl;
     }
 }
  /********************************************* 
@@ -162,29 +158,30 @@ void SolveEquation(matrix& a, vector<double>& b) {
 
 // SimplexSelectPivotElement selects the first free element
 Position SimplexSelectPivotElement(
+  int n,
+  int m,
   const matrix &a, 
-  const vector<double>& b,
-  vector<bool> &used_rows, 
-  vector<bool> &used_columns) {
-    size_t n = used_rows.size();
-    size_t m = used_columns.size();
-
+  const vector<double>& b) {
+    bool found = false;
     size_t p_row = 0;
     size_t p_col = 0;
 
-    // select column (coefficient is negative, and not used yet)
+    // select column (coefficient is negative, and most negetive)
     for(size_t i = 1; i < m; i++) {
       if (a[0][i] >= 0) continue; // not satisfactory
-      if (used_columns[i]) continue;  // satisfactory, but meet loop
-      p_col = i;
-      break;
+      if (!found){ 
+        p_col = i;
+        found = true;
+      } else {
+        if(a[0][i] < a[0][p_col]) p_col = i;
+      }
     }
 
     // select row (which is most easily overflowed as the variable increases)
     double min_div = numeric_limits<double>::max();
     for(size_t i = 1; i < n; i++) {
       if (a[i][p_col] <= 0) continue;  // not satisfactory
-      if (used_rows[i]) continue;  // meet loop
+      if (b[i] <= 0) continue;
       double tmp = b[i] / a[i][p_col];
       if (tmp < min_div) {
         min_div = tmp;
@@ -195,8 +192,9 @@ Position SimplexSelectPivotElement(
     return Position(p_col, p_row);
 }
 
-void SimplexProcessPivotElement(matrix &a, vector<double> &b, const Position &pivot_element) {
-    if (a[pivot_element.row][pivot_element.column] == 0) return;
+// feasible or infeasible
+bool SimplexProcessPivotElement(matrix &a, vector<double> &b, const Position &pivot_element) {
+    if (a[pivot_element.row][pivot_element.column] == 0) return true;
     size_t n = a.size();
     size_t m = a[0].size();
 
@@ -210,38 +208,215 @@ void SimplexProcessPivotElement(matrix &a, vector<double> &b, const Position &pi
         if (i==pivot_element.row) continue;
         if (a[i][pivot_element.column]==0) continue;
         double multBy = a[i][pivot_element.column];
+
+        // check feasibility
+        bool no_negative = true;
+        bool no_positive = true;
+        for(size_t j = 0; j < m; j++){
+          if(a[i][j] > 0) no_positive = false;  // exist some positive
+          else if(a[i][j] < 0) no_negative = false; // exist some negative, namely not positve
+        }
+        if(b[i] > 0 && no_positive) return false; // infeasible
+        if(b[i] < 0 && no_negative) return false; // infeasible
+        
+        // update values
         for(size_t j = 0; j < m; j++)
-            a[i][j] -= multBy * a[pivot_element.row][j];
+          a[i][j] -= multBy * a[pivot_element.row][j];
+         
         b[i] -= multBy * b[pivot_element.row];
     }
+    return true;
 }
 
-void SimplexSolve(matrix& A, vector<double>& b) {
+// -1, infeasible, no solution
+// 0, bounded solution
+// 1, infinity
+int SimplexSolve(matrix& A, vector<double>& b) {
     size_t n = A.size();
     size_t m = A[0].size();
 
-    vector<bool> used_columns(m, false);
-    vector<bool> used_rows(n, false);
-    used_columns[0] = true;
-    used_rows[0] = true;
-
     size_t count = 0;
     while(true) {
-      // cout << "SimplexSolve round " << ++count << ":" << endl;
-      // printAb(" A b:", A, b);
-      Position pivot_element = SimplexSelectPivotElement(A, b, used_rows, used_columns);
-      if(pivot_element.column==0) break;  // terminate: all coefficients are nonnegative or meet loop
-      if(pivot_element.row==0) break; // terminate: no positive coefficients for the rest rows (unbounded value) or meet loop
+      Position pivot_element = SimplexSelectPivotElement(n, m, A, b);
+      if(pivot_element.column==0) return 0;  // terminate: all coefficients are nonnegative or meet loop
+      if(pivot_element.row==0) return 1; // terminate: no positive coefficients for the rest rows -> infinity
 
-      SimplexProcessPivotElement(A, b, pivot_element);
+      cout << "SimplexSolve round " << ++count << ":" << endl;
+      printAb(" A b:", A, b);
+      cout << "......., row:" << pivot_element.row << ", col:" << pivot_element.column << ", val:" << A[pivot_element.row][pivot_element.column] << endl;
+      cout << endl << endl;
+      bool feasible = SimplexProcessPivotElement(A, b, pivot_element);
+      if (!feasible) return -1;
     }
+    return 0;
 }
 
 /********************************************* 
  * SimplexSolve end
  *********************************************/
 
+pair<matrix, vector<double> > solve_phase_i(
+  int n,
+  int m,
+  matrix A,
+  vector<double> b,
+  vector<double> c){
+    bool needPhaseI = false;
+    for(size_t i = 0; i < n; i++) needPhaseI = needPhaseI || (b[i] < 0);
+  
+    if (!needPhaseI) {
+      /*** expand A and b, c as the first row of the new A **/
+      /*** start expanding ***/
+      int newN = n+1;
+      int newM = m + n + 1;
+      matrix newA(newN, vector<double>(newM, 0));
+      // set c as the first row of newA
+      vector<double>& firstRow = newA[0];
+      firstRow[0] = 1;
+      for(size_t i = 0; i < m; i++) firstRow[i+1] = - c[i];
+      // set next n rows according to A
+      for(size_t i = 0; i < n; i++) {
+        for(size_t j = 0; j < m; j++)  newA[i+1][j+1] = A[i][j];
+        newA[i+1][m+i+1] = 1;
+      }
+      // set newB
+      vector<double> newB(newN, 0);
+      for(size_t i = 0; i < n; i++) newB[i+1] = b[i];
+      /*** end expanding ***/
+      return make_pair(newA, newB);
+    }
+
+    // need Phase I
+    // continue expanding
+    int newN = n+2;
+    int newM = m + 2 * n + 2;
+    matrix newA(newN, vector<double>(newM, 0));
+    vector<double> newB(newN, 0);
+
+    // first row consists of artifical variables, 
+    // which should not enter the basis
+    // Z = -a1 - a2 - a3 ... - aN; find its max for this problem.
+    vector<double>& firstRow = newA[0]; 
+    firstRow[0] = 1;
+    for(size_t j = 2 + m + n; j < newM; j++) firstRow[j] = 1;
+    
+    // the second row consists of original coefficients
+    // we want to find its max
+    vector<double>& secondRow = newA[1];
+    secondRow[1] = 1;
+    for(size_t i = 0; i < m; i++) secondRow[i+2] = -c[i];
+
+    // the next rows are the coefficents from A
+    for(size_t i = 0; i < n; i++) {
+      vector<double>& r = newA[i+2];
+      // set the first m coefficients
+      for(size_t j = 0; j < m; j++) {
+        if (b[i] < 0) r[j+2] = - A[i][j];
+        else r[j+2] = A[i][j];
+      }
+      // set the slack variable
+      if (b[i] < 0) r[2+m+i] = -1;
+      else r[2+m+i] = 1;
+      // set the artificial variable
+      r[2 + m + n + i] = 1;
+      // set new b
+      if (b[i] < 0) newB[i+2] = - b[i];
+      else newB[i+2] = b[i];
+    }
+
+    // price out the artificial variables in the first row
+    for(size_t i = 0; i < n; i++) {
+      for(size_t j = 0; j < newM; j++) {
+        newA[0][j] -= newA[2+i][j];
+      }
+      newB[0] -= newB[2+i];
+    }
+
+    cout << "Phase I, after pricing out:" << endl;
+    printAb("A, b:", newA, newB);
+
+    // solve the phase I problem
+    SimplexSolve(newA, newB);
+    cout << "Phase I, after solve:" << endl;
+    printAb("A, b:", newA, newB);
+
+    // remove artificial variables in newA and newB
+    int newN2 = n+1;
+    int newM2 = 1 + m + n;
+    matrix newA2(newN2, vector<double>(newM2, 0));
+    for(size_t i = 0; i < newN2; i++) {
+      for(size_t j = 0; j < newM2; j++) {
+        newA2[i][j] = newA[i+1][j+1];
+      }
+    }
+    vector<double> newB2(newB.begin()+1, newB.end());
+
+    return make_pair(newA2, newB2);
+}
+
+// // here we use simplex algorithm to solve the problem
+// // m variables and n constraits
+// // canonical form
+// pair<int, vector<double>> solve_phase_ii(
+//   int n, 
+//   int m, 
+//   matrix A, 
+//   vector<double> b) {
+//   SimplexSolve(A, b);
+
+//   // check the results
+//   bool all_non_negative = true;
+//   size_t negative_idx = 0;
+//   for(size_t i = 0; i < newM; i++) {
+//     if (newA[0][i] < 0) {
+//       all_non_negative = false;
+//       break;
+//     }
+//   }
+//   if (all_non_negative) {
+//     // solve the equation
+//     for(size_t j = 1; j < newM; j++) {
+//       vector<double> tmp(newM, 0);
+//       if(newA[0][j] > 0) {
+//           newA[0][j] = 0;
+//           tmp[j] = 1;
+//       }
+//       newA.push_back(tmp);
+//       newB.push_back(0);
+//     }
+//     // print("new A:", newA);
+//     // printRow("new B:", newB);
+
+//     // if any element in c is zero, the unknown value is set as ZERO as the optimal
+//     for(size_t i = 0; i < m; i++) {
+//       if (c[i] == 0) {
+//         vector<double> tmp(newM, 0);
+//         tmp[i+1] = 1;
+//         newA.push_back(tmp);
+//         newB.push_back(0);
+//       }
+//     }
+
+//     SolveEquation(newA, newB);
+//     // print("new A:", newA);
+//     // printRow("new res:", newB);
+//     vector<double> res(m, 0);
+//     for(size_t i = 0; i < m; i++) {
+//       // expected form: canonical form
+//       // every unknown variable is known
+//       // every unknown variable is >= 0; otherwise no solution
+//       if (newB[i+1] < 0) return {-1, vector<double>(m, 0)};
+//       res[i] = newB[i+1];
+//     }
+//     return {0, res};
+//   }
+
+//   // some are negative, leading to Infinity
+//   return {1, vector<double>(m,0)};
+// }
+
 // here we use simplex algorithm to solve the problem
+// m variables and n constraits
 pair<int, vector<double>> solve_diet_problem(
     int n, 
     int m, 
@@ -249,81 +424,53 @@ pair<int, vector<double>> solve_diet_problem(
     vector<double> b, 
     vector<double> c) {
 
-  /*** expand A and b, c as the first row of the new A **/
-  /*** start expanding ***/
-  int newN = n+1;
-  int newM = m + n + 1;
-  matrix newA(newN, vector<double>(newM, 0));
-  // set c as the first row of newA
-  vector<double>& firstRow = newA[0];
-  firstRow[0] = 1;
-  for(size_t i = 0; i < m; i++) firstRow[i+1] = - c[i];
-  // set next n rows according to A
-  for(size_t i = 0; i < n; i++) {
-    for(size_t j = 0; j < m; j++)  newA[i+1][j+1] = A[i][j];
-    newA[i+1][m+i+1] = 1;
-  }
-  // set newB
-  vector<double> newB(newN, 0);
-  for(size_t i = 0; i < n; i++) newB[i+1] = b[i];
-  /*** end expanding ***/
+  auto res = solve_phase_i(n, m, A, b, c);
+  matrix newA = res.first;
+  vector<double> newB = res.second;
+  printAb("phase I result: ", newA, newB);
 
+  int ret_code = SimplexSolve(newA, newB);
+  if (ret_code != 0) return {-1, newB};
   
-  // use Guassian elimination to get the canonical form 
-  // otherwise the algorithm SimplexSolve does not work for tests/36 (all coefficient is non-negative)
+  cout << endl;
+  printAb("phase II result:", newA, newB);
+
+  // solve the equation
+  size_t newM = A[0].size();
+  for(size_t j = 1; j < newM; j++) {
+    vector<double> tmp(newM, 0);
+    if(newA[0][j] > 0) {
+        newA[0][j] = 0;
+        tmp[j] = 1;
+    }
+    newA.push_back(tmp);
+    newB.push_back(0);
+  }
+  // print("new A:", newA);
+  // printRow("new B:", newB);
+
+  // // if any element in c is zero, the unknown value is set as ZERO as the optimal
+  // for(size_t i = 0; i < m; i++) {
+  //   if (c[i] == 0) {
+  //     vector<double> tmp(newM, 0);
+  //     tmp[i+1] = 1;
+  //     newA.push_back(tmp);
+  //     newB.push_back(0);
+  //   }
+  // }
+
   SolveEquation(newA, newB);
-  // find replace all variables whose coefficient is negative (because we want the maximum)
-  SimplexSolve(newA, newB);
-
-  // check the results
-  bool all_non_negative = true;
-  size_t negative_idx = 0;
-  for(size_t i = 0; i < newM; i++) {
-    if (newA[0][i] < 0) {
-      all_non_negative = false;
-      break;
-    }
+  // print("new A:", newA);
+  // printRow("new res:", newB);
+  vector<double> resVec(m, 0);
+  for(size_t i = 0; i < m; i++) {
+    // expected form: canonical form
+    // every unknown variable is known
+    // every unknown variable is >= 0; otherwise no solution
+    if (newB[i+1] < 0) return {-1, vector<double>(m, 0)};
+    resVec[i] = newB[i+1];
   }
-  if (all_non_negative) {
-    // solve the equation
-    for(size_t j = 1; j < newM; j++) {
-      vector<double> tmp(newM, 0);
-      if(newA[0][j] > 0) {
-          newA[0][j] = 0;
-          tmp[j] = 1;
-      }
-      newA.push_back(tmp);
-      newB.push_back(0);
-    }
-    // print("new A:", newA);
-    // printRow("new B:", newB);
-
-    // if any element in c is zero, the unknown value is set as ZERO as the optimal
-    for(size_t i = 0; i < m; i++) {
-      if (c[i] == 0) {
-        vector<double> tmp(newM, 0);
-        tmp[i+1] = 1;
-        newA.push_back(tmp);
-        newB.push_back(0);
-      }
-    }
-  
-    SolveEquation(newA, newB);
-    // print("new A:", newA);
-    // printRow("new res:", newB);
-    vector<double> res(m, 0);
-    for(size_t i = 0; i < m; i++) {
-      // expected form: canonical form
-      // every unknown variable is known
-      // every unknown variable is >= 0; otherwise no solution
-      if (newB[i+1] < 0) return {-1, vector<double>(m, 0)};
-      res[i] = newB[i+1];
-    }
-    return {0, res};
-  }
-
-  // some are negative, leading to Infinity
-  return {1, vector<double>(m,0)};
+  return {0, resVec};
 }
 
 int main(){
