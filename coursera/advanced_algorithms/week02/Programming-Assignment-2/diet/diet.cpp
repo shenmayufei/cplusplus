@@ -65,45 +65,43 @@ struct Position {
  * SolveEquation start
  *********************************************/
 
-// SelectPivotElement selects the first free element
+// SelectPivotElement selects the first free line and first free element
 // the pivot value could be zero (which must be the first position)
 // or non-zero value
 // actually, column is still the row number (whose value is often not zero)
 // the most ideal condition is row==column (whose value is not zero, probably one)
-Position SelectPivotElement(
+pair<int, Position> SelectPivotElement(
   const matrix &a, 
   std::vector <bool> &used_rows, 
   std::vector <bool> &used_columns) {
     size_t n = used_rows.size();
     size_t m = used_columns.size();
 
-    Position pivot_element(0, 0);
-    while (used_rows[pivot_element.row] && pivot_element.row < n)
-        ++pivot_element.row;
-    while (used_columns[pivot_element.column] && pivot_element.column < m)
-        ++pivot_element.column;
+    size_t r = 0;
+    size_t c = 0;
+    while(used_rows[r] && r < n) r++;  // find the next row not used
+    while(used_columns[c] && c < m) c++;
 
+    if (r == n) return {r, Position(0,0)};
 
-    if (pivot_element.row == n || pivot_element.column == m)
-        return pivot_element;  // invalid position
-
-    for(size_t i = pivot_element.column; i < n; i++){
-        if (a[i][pivot_element.column] != 0) {
-            pivot_element.row = i;
-            return pivot_element;
+    for(size_t j = c; j < m; j++) {
+      for(size_t i = r; i < n; i++) {
+        if (a[i][j] != 0) {
+          return {r, Position(j, i)};
         }
+      }
+      used_columns[j] = true;
     }
-    return pivot_element;
+
+    return {r, Position(n, r)};
 }
 
 // After swapping, row==column
 // the first free element could probably NOT zero, but also possibly is zero
-void SwapLines(matrix &a, vector<double> &b, std::vector <bool> &used_rows, Position &pivot_element) {
-    if(a[pivot_element.row][pivot_element.column]) {
-        std::swap(a[pivot_element.column], a[pivot_element.row]);
-        std::swap(b[pivot_element.column], b[pivot_element.row]);
-    }
-    pivot_element.row = pivot_element.column;
+void SwapLines(matrix &a, vector<double> &b, int r, Position &pivot_element) {
+  std::swap(a[r], a[pivot_element.row]);
+  std::swap(b[r], b[pivot_element.row]);
+  pivot_element.row = r;
 }
 
 void ProcessPivotElement(matrix &a, vector<double> &b, const Position &pivot_element) {
@@ -139,8 +137,12 @@ void SolveEquation(matrix& a, vector<double>& b) {
     std::vector <bool> used_columns(m, false);
     std::vector <bool> used_rows(n, false);
     for (int step = 0; step < m && step < n; ++step) {
-        Position pivot_element = SelectPivotElement(a, used_rows, used_columns);
-        SwapLines(a, b, used_rows, pivot_element);
+        auto pvPair = SelectPivotElement(a, used_rows, used_columns);
+        int r = pvPair.first;
+        Position pivot_element = pvPair.second;
+        if (r == n || pivot_element.column == m) return;  // 
+        SwapLines(a, b, r, pivot_element);
+
         ProcessPivotElement(a, b, pivot_element);
         MarkPivotElementUsed(pivot_element, used_rows, used_columns);
 
@@ -402,6 +404,10 @@ pair<int, vector<double>> solve_diet_problem(
 
   cout << "before solve equation" << endl << endl;
   SolveEquation(newA, newB);
+  // fix the bug for tests/02
+  for(size_t i = 1; i < newB.size(); i++) {
+    if (newB[i] < 0) return {-1, vector<double>(m, 0)};
+  }
   cout << "after solve equation" << endl << endl;
   // print("new A:", newA);
   // printRow("new res:", newB);
