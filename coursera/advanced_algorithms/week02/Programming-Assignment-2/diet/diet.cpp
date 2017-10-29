@@ -146,8 +146,8 @@ void SolveEquation(matrix& a, vector<double>& b) {
         ProcessPivotElement(a, b, pivot_element);
         MarkPivotElementUsed(pivot_element, used_rows, used_columns);
 
-        cout << "SolveEquation step " << step << endl;
-        printAb("A b:", a, b);
+        // cout << "SolveEquation step " << step << endl;
+        // printAb("A b:", a, b);
     }
 }
  /********************************************* 
@@ -184,7 +184,7 @@ Position SimplexSelectPivotElement(
     double min_div = numeric_limits<double>::max();
     for(size_t i = row_start; i < n; i++) {
       if (a[i][p_col] <= 0) continue;  // not satisfactory
-      if (b[i] < 0) continue;  // allow degeneration (ZERO)
+      if (b[i] < -0.001) continue;  // allow degeneration (ZERO)
       double tmp = b[i] / a[i][p_col];
       if (tmp < min_div) {
         min_div = tmp;
@@ -196,31 +196,21 @@ Position SimplexSelectPivotElement(
 }
 
 // feasible or infeasible
-bool SimplexProcessPivotElement(matrix &a, vector<double> &b, const Position &pivot_element) {
+bool SimplexProcessPivotElement(matrix &a, vector<double> &b, const Position &pivot_element, size_t row_start) {
     if (a[pivot_element.row][pivot_element.column] == 0) return true;
     size_t n = a.size();
     size_t m = a[0].size();
 
     // set this row pivot value as ONE
     double baseVal = a[pivot_element.row][pivot_element.column];
-    for(size_t j = pivot_element.column; j< m; j++) a[pivot_element.row][j] /= baseVal;
+    for(size_t j = 0; j< m; j++) a[pivot_element.row][j] /= baseVal;
     b[pivot_element.row] /= baseVal;
 
     // update other rows
     for(size_t i = 0; i < n; i++){
         if (i==pivot_element.row) continue;
-        if (a[i][pivot_element.column]==0) continue;
+        if (a[i][pivot_element.column] < 0.001 && a[i][pivot_element.column] > -0.001) continue;
         double multBy = a[i][pivot_element.column];
-
-        // check feasibility
-        bool no_negative = true;
-        bool no_positive = true;
-        for(size_t j = 0; j < m; j++){
-          if(a[i][j] > 0) no_positive = false;  // exist some positive
-          else if(a[i][j] < 0) no_negative = false; // exist some negative, namely not positve
-        }
-        if(b[i] > 0 && no_positive) return false; // infeasible
-        if(b[i] < 0 && no_negative) return false; // infeasible
         
         // update values
         for(size_t j = 0; j < m; j++)
@@ -228,6 +218,7 @@ bool SimplexProcessPivotElement(matrix &a, vector<double> &b, const Position &pi
          
         b[i] -= multBy * b[pivot_element.row];
     }
+
     return true;
 }
 
@@ -240,6 +231,24 @@ int SimplexSolve(matrix& A, vector<double>& b, size_t row_start) {
 
     size_t count = 0;
     while(true) {
+      // check feasibility
+      for(size_t i = row_start; i< n; i++ ){
+        bool no_negative = true;
+        bool no_positive = true;
+        for(size_t j = 0; j < m; j++){
+          if(A[i][j] >= 0.001) no_positive = false;  // exist some positive
+          else if(A[i][j] <= -0.001) no_negative = false; // exist some negative, namely not positve
+        }
+        if(b[i] >= 0.001 && no_positive) {
+          // cout << "no positive, i=" << i << endl;
+          return false; // infeasible
+        }
+        if(b[i] <= -0.001 && no_negative) {
+          // cout << "no negative" << endl;
+          return false; // infeasible
+        }
+      }
+      
       Position pivot_element = SimplexSelectPivotElement(n, m, A, b, row_start);
       if(pivot_element.column==0) return 0;  // terminate: all coefficients are nonnegative or meet loop
       if(pivot_element.row==0) return 1; // terminate: no positive coefficients for the rest rows -> infinity
@@ -247,10 +256,30 @@ int SimplexSolve(matrix& A, vector<double>& b, size_t row_start) {
       cout << "SimplexSolve round " << ++count << ":" << endl;
       printAb(" A b:", A, b);
       cout << "......., row:" << pivot_element.row << ", col:" << pivot_element.column << ", val:" << A[pivot_element.row][pivot_element.column] << endl;
+      bool feasible = SimplexProcessPivotElement(A, b, pivot_element, row_start);
+      cout << "feasible: " << feasible << endl;
       cout << endl << endl;
-      bool feasible = SimplexProcessPivotElement(A, b, pivot_element);
       if (!feasible) return -1;
     }
+
+    // final check: check feasibility
+    for(size_t i = row_start; i< n; i++ ){
+      bool no_negative = true;
+      bool no_positive = true;
+      for(size_t j = 0; j < m; j++){
+        if(A[i][j] >= 0.001) no_positive = false;  // exist some positive
+        else if(A[i][j] <= -0.001) no_negative = false; // exist some negative, namely not positve
+      }
+      if(b[i] >= 0.001 && no_positive) {
+        cout << "no positive, i=" << i << endl;
+        return false; // infeasible
+      }
+      if(b[i] <= -0.001 && no_negative) {
+        cout << "no negative" << endl;
+        return false; // infeasible
+      }
+    }
+
     return 0;
 }
 
@@ -370,8 +399,10 @@ pair<int, vector<double>> solve_diet_problem(
   matrix newA = res.first;
   vector<double> newB = res.second;
   printAb("phase I result: ", newA, newB);
-
+  cout << "newB.size()-n=" << newB.size() -n  << ", n=" << n << endl << endl; 
   int ret_code = SimplexSolve(newA, newB, newB.size() - n);
+  printAb("phase II result: ", newA, newB);
+  cout << "newB.size()-n=" << newB.size() -n  << ", n=" << n << endl; 
   if (ret_code != 0) return {ret_code, newB}; // fix infinity problem (tests/03)
   
   cout << endl;
@@ -403,13 +434,13 @@ pair<int, vector<double>> solve_diet_problem(
     }
   }
 
-  cout << "before solve equation" << endl << endl;
+  // cout << "before solve equation" << endl << endl;
   SolveEquation(newA, newB);
   // fix the bug for tests/02
   for(size_t i = 1; i < newB.size(); i++) {
-    if (newB[i] < 0) return {-1, vector<double>(m, 0)};
+    if (newB[i] < -0.001) return {-1, vector<double>(m, 0)};
   }
-  cout << "after solve equation" << endl << endl;
+  // cout << "after solve equation" << endl << endl;
   // print("new A:", newA);
   // printRow("new res:", newB);
   vector<double> resVec(m, 0);
@@ -417,10 +448,10 @@ pair<int, vector<double>> solve_diet_problem(
     // expected form: canonical form
     // every unknown variable is known
     // every unknown variable is >= 0; otherwise no solution
-    if (newB[i+1] < 0) return {-1, resVec};
+    if (newB[i+1] < -0.001) return {-1, resVec};
     resVec[i] = newB[i+1];
   }
-  printRow("solution: ", resVec);
+  // printRow("solution: ", resVec);
   return {0, resVec};
 }
 
