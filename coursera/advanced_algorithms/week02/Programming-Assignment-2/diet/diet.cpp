@@ -371,7 +371,7 @@ pair<int, vector<double>> solve_diet_problem(
   printAb("phase I result: ", newA, newB);
 
   int ret_code = SimplexSolve(newA, newB);
-  if (ret_code != 0) return {-1, newB};
+  if (ret_code != 0) return {ret_code, newB}; // fix infinity problem (tests/03)
   
   cout << endl;
   printAb("phase II result:", newA, newB);
