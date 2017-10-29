@@ -144,8 +144,8 @@ void SolveEquation(matrix& a, vector<double>& b) {
         ProcessPivotElement(a, b, pivot_element);
         MarkPivotElementUsed(pivot_element, used_rows, used_columns);
 
-        // cout << "SolveEquation step " << step << endl;
-        // printAb("A b:", a, b);
+        cout << "SolveEquation step " << step << endl;
+        printAb("A b:", a, b);
     }
 }
  /********************************************* 
@@ -354,67 +354,6 @@ pair<matrix, vector<double> > solve_phase_i(
     return make_pair(newA2, newB2);
 }
 
-// // here we use simplex algorithm to solve the problem
-// // m variables and n constraits
-// // canonical form
-// pair<int, vector<double>> solve_phase_ii(
-//   int n, 
-//   int m, 
-//   matrix A, 
-//   vector<double> b) {
-//   SimplexSolve(A, b);
-
-//   // check the results
-//   bool all_non_negative = true;
-//   size_t negative_idx = 0;
-//   for(size_t i = 0; i < newM; i++) {
-//     if (newA[0][i] < 0) {
-//       all_non_negative = false;
-//       break;
-//     }
-//   }
-//   if (all_non_negative) {
-//     // solve the equation
-//     for(size_t j = 1; j < newM; j++) {
-//       vector<double> tmp(newM, 0);
-//       if(newA[0][j] > 0) {
-//           newA[0][j] = 0;
-//           tmp[j] = 1;
-//       }
-//       newA.push_back(tmp);
-//       newB.push_back(0);
-//     }
-//     // print("new A:", newA);
-//     // printRow("new B:", newB);
-
-//     // if any element in c is zero, the unknown value is set as ZERO as the optimal
-//     for(size_t i = 0; i < m; i++) {
-//       if (c[i] == 0) {
-//         vector<double> tmp(newM, 0);
-//         tmp[i+1] = 1;
-//         newA.push_back(tmp);
-//         newB.push_back(0);
-//       }
-//     }
-
-//     SolveEquation(newA, newB);
-//     // print("new A:", newA);
-//     // printRow("new res:", newB);
-//     vector<double> res(m, 0);
-//     for(size_t i = 0; i < m; i++) {
-//       // expected form: canonical form
-//       // every unknown variable is known
-//       // every unknown variable is >= 0; otherwise no solution
-//       if (newB[i+1] < 0) return {-1, vector<double>(m, 0)};
-//       res[i] = newB[i+1];
-//     }
-//     return {0, res};
-//   }
-
-//   // some are negative, leading to Infinity
-//   return {1, vector<double>(m,0)};
-// }
-
 // here we use simplex algorithm to solve the problem
 // m variables and n constraits
 pair<int, vector<double>> solve_diet_problem(
@@ -424,7 +363,7 @@ pair<int, vector<double>> solve_diet_problem(
     vector<double> b, 
     vector<double> c) {
 
-  auto res = solve_phase_i(n, m, A, b, c);
+  pair<matrix, vector<double> > res = solve_phase_i(n, m, A, b, c);
   matrix newA = res.first;
   vector<double> newB = res.second;
   printAb("phase I result: ", newA, newB);
@@ -436,7 +375,8 @@ pair<int, vector<double>> solve_diet_problem(
   printAb("phase II result:", newA, newB);
 
   // solve the equation
-  size_t newM = A[0].size();
+  // there ever had a bug here, because I write A[0] instead of newA[0]
+  size_t newM = newA[0].size();
   for(size_t j = 1; j < newM; j++) {
     vector<double> tmp(newM, 0);
     if(newA[0][j] > 0) {
@@ -449,17 +389,20 @@ pair<int, vector<double>> solve_diet_problem(
   // print("new A:", newA);
   // printRow("new B:", newB);
 
-  // // if any element in c is zero, the unknown value is set as ZERO as the optimal
-  // for(size_t i = 0; i < m; i++) {
-  //   if (c[i] == 0) {
-  //     vector<double> tmp(newM, 0);
-  //     tmp[i+1] = 1;
-  //     newA.push_back(tmp);
-  //     newB.push_back(0);
-  //   }
-  // }
+  // if any element in c is zero, the unknown value is set as ZERO as the optimal
+  // check test/07
+  for(size_t i = 0; i < m; i++) {
+    if (c[i] == 0) {
+      vector<double> tmp(newM, 0);
+      tmp[i+1] = 1;
+      newA.push_back(tmp);
+      newB.push_back(0);
+    }
+  }
 
+  cout << "before solve equation" << endl << endl;
   SolveEquation(newA, newB);
+  cout << "after solve equation" << endl << endl;
   // print("new A:", newA);
   // printRow("new res:", newB);
   vector<double> resVec(m, 0);
@@ -467,9 +410,10 @@ pair<int, vector<double>> solve_diet_problem(
     // expected form: canonical form
     // every unknown variable is known
     // every unknown variable is >= 0; otherwise no solution
-    if (newB[i+1] < 0) return {-1, vector<double>(m, 0)};
+    if (newB[i+1] < 0) return {-1, resVec};
     resVec[i] = newB[i+1];
   }
+  printRow("solution: ", resVec);
   return {0, resVec};
 }
 
