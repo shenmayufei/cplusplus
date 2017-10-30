@@ -374,15 +374,9 @@ pair<matrix, vector<double> > solve_phase_i(
     printAb("A, b:", newA, newB);
 
     // check feasibility,  
-    // if artificial variables are still in the basis, 
-    // there is no feasible solution
-    if (newB.size() - n == 2) {
-      bool no_zero = true;
-      for(size_t i = 0; i < n; i++) {
-        if (newA[0][2 + m + n + i] < 0.001 && newA[0][2+m+n+i] > -0.001) no_zero = false;
-      }
-      if (!no_zero) return {newA, newB};
-    }
+    // if b[0] < -0.001, then there is no feasible solution
+    // because the -a1-a2-a3...  must be ZERO, if there is a feasible solution
+    if (newB[0] < -0.001) return {newA, newB};
 
     // remove artificial variables in newA and newB
     int newN2 = n+1;
