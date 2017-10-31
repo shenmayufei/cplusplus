@@ -171,8 +171,8 @@ Position SimplexSelectPivotElement(
 
     // select column (coefficient is negative, and most negetive)
     for(size_t i = row_start; i < m; i++) {
-      // why -0.001, not ZERO, refer to tests/45
-      if (a[0][i] >= -0.001) continue; // not satisfactory
+      // why -0.000001, not ZERO, refer to tests/45
+      if (a[0][i] >= -0.000001) continue; // not satisfactory
       if (!found){ 
         p_col = i;
         found = true;
@@ -184,8 +184,8 @@ Position SimplexSelectPivotElement(
     // select row (which is most easily overflowed as the variable increases)
     double min_div = numeric_limits<double>::max();
     for(size_t i = row_start; i < n; i++) {
-      if (a[i][p_col] <= 0) continue;  // not satisfactory
-      if (b[i] < -0.001) continue;  // allow degeneration (ZERO)
+      if (a[i][p_col] <= -0.000001) continue;  // not satisfactory
+      if (b[i] < -0.000001) continue;  // allow degeneration (ZERO)
       double tmp = b[i] / a[i][p_col];
       if (tmp < min_div) {
         min_div = tmp;
@@ -210,7 +210,7 @@ bool SimplexProcessPivotElement(matrix &a, vector<double> &b, const Position &pi
     // update other rows
     for(size_t i = 0; i < n; i++){
         if (i==pivot_element.row) continue;
-        if (a[i][pivot_element.column] < 0.001 && a[i][pivot_element.column] > -0.001) continue;
+        if (a[i][pivot_element.column] < 0.000001 && a[i][pivot_element.column] > -0.000001) continue;
         double multBy = a[i][pivot_element.column];
         
         // update values
@@ -218,6 +218,7 @@ bool SimplexProcessPivotElement(matrix &a, vector<double> &b, const Position &pi
           a[i][j] -= multBy * a[pivot_element.row][j];
          
         b[i] -= multBy * b[pivot_element.row];
+        if (b[i] < 0.000001 && b[i] > -0.000001) b[i] = 0; // correlation
     }
 
     return true;
@@ -237,14 +238,15 @@ int SimplexSolve(matrix& A, vector<double>& b, size_t row_start) {
         bool no_negative = true;
         bool no_positive = true;
         for(size_t j = 0; j < m; j++){
-          if(A[i][j] >= 0.001) no_positive = false;  // exist some positive
-          else if(A[i][j] <= -0.001) no_negative = false; // exist some negative, namely not positve
+          if(A[i][j] >= 0.000001) no_positive = false;  // exist some positive
+          else if(A[i][j] <= -0.000001) no_negative = false; // exist some negative, namely not positve
+          else A[i][j] = 0;
         }
-        if(b[i] >= 0.001 && no_positive) {
+        if(b[i] >= 0.000001 && no_positive) {
           // cout << "no positive, i=" << i << endl;
           return false; // infeasible
         }
-        if(b[i] <= -0.001 && no_negative) {
+        if(b[i] <= -0.000001 && no_negative) {
           // cout << "no negative" << endl;
           return false; // infeasible
         }
@@ -268,14 +270,15 @@ int SimplexSolve(matrix& A, vector<double>& b, size_t row_start) {
       bool no_negative = true;
       bool no_positive = true;
       for(size_t j = 0; j < m; j++){
-        if(A[i][j] >= 0.001) no_positive = false;  // exist some positive
-        else if(A[i][j] <= -0.001) no_negative = false; // exist some negative, namely not positve
+        if(A[i][j] >= 0.000001) no_positive = false;  // exist some positive
+        else if(A[i][j] <= -0.000001) no_negative = false; // exist some negative, namely not positve
+        else A[i][j] = 0;
       }
-      if(b[i] >= 0.001 && no_positive) {
+      if(b[i] >= 0.000001 && no_positive) {
         cout << "no positive, i=" << i << endl;
         return false; // infeasible
       }
-      if(b[i] <= -0.001 && no_negative) {
+      if(b[i] <= -0.000001 && no_negative) {
         cout << "no negative" << endl;
         return false; // infeasible
       }
@@ -374,9 +377,9 @@ pair<matrix, vector<double> > solve_phase_i(
     printAb("A, b:", newA, newB);
 
     // check feasibility,  
-    // if b[0] < -0.001, then there is no feasible solution
+    // if b[0] < -0.000001, then there is no feasible solution
     // because the -a1-a2-a3...  must be ZERO, if there is a feasible solution
-    if (newB[0] < -0.001) return {newA, newB};
+    if (newB[0] < -0.000001) return {newA, newB};
 
     // remove artificial variables in newA and newB
     int newN2 = n+1;
@@ -422,16 +425,16 @@ pair<int, vector<double>> solve_diet_problem(
   // there ever had a bug here, because I write A[0] instead of newA[0]
   size_t newM = newA[0].size();
   for(size_t j = 1; j < newM; j++) {
-    vector<double> tmp(newM, 0);
     if(newA[0][j] > 0) {
-        newA[0][j] = 0;
-        tmp[j] = 1;
+      vector<double> tmp(newM, 0);
+      // for(size_t k = 0; k < newA.size(); k++) newA[k][j] = 0;
+      // newA[0][j] = 0;
+      tmp[j] = 1;
+      newA.push_back(tmp);
+      newB.push_back(0);
     }
-    newA.push_back(tmp);
-    newB.push_back(0);
   }
-  // print("new A:", newA);
-  // printRow("new B:", newB);
+  printAb("new A b:", newA, newB);
 
   // if any element in c is zero, the unknown value is set as ZERO as the optimal
   // check test/07
@@ -446,9 +449,11 @@ pair<int, vector<double>> solve_diet_problem(
 
   // cout << "before solve equation" << endl << endl;
   SolveEquation(newA, newB);
+  printAb("after Solve, new A b:", newA, newB);
+
   // fix the bug for tests/02
   for(size_t i = 1; i < newB.size(); i++) {
-    if (newB[i] < -0.001) return {-1, vector<double>(m, 0)};
+    if (newB[i] < -0.000001) return {-1, vector<double>(m, 0)};
   }
   // cout << "after solve equation" << endl << endl;
   // print("new A:", newA);
@@ -458,7 +463,7 @@ pair<int, vector<double>> solve_diet_problem(
     // expected form: canonical form
     // every unknown variable is known
     // every unknown variable is >= 0; otherwise no solution
-    if (newB[i+1] < -0.001) return {-1, resVec};
+    if (newB[i+1] < -0.000001) return {-1, resVec};
     resVec[i] = newB[i+1];
   }
   // printRow("solution: ", resVec);
