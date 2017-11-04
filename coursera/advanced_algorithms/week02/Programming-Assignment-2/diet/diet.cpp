@@ -8,6 +8,8 @@ const int PRECISION = 20;
 
 typedef vector<vector<double>> matrix;
 
+const bool LOG = true;
+
 /****
  * the problem cannot be solved by duality (complementary slackness) after many tries,
  * so I choose to solve it via moving between vertices of a polytope, 
@@ -146,7 +148,7 @@ void SolveEquation(matrix& a, vector<double>& b) {
         ProcessPivotElement(a, b, pivot_element);
         MarkPivotElementUsed(pivot_element, used_rows, used_columns);
 
-        // cout << "SolveEquation step " << step << endl;
+        if (LOG) cout << "SolveEquation step " << step << endl;
         // printAb("A b:", a, b);
     }
 }
@@ -243,11 +245,11 @@ int SimplexSolve(matrix& A, vector<double>& b, size_t row_start) {
           else A[i][j] = 0;
         }
         if(b[i] >= 0.000001 && no_positive) {
-          // cout << "no positive, i=" << i << endl;
+          if (LOG) cout << "no positive, i=" << i << endl;
           return false; // infeasible
         }
         if(b[i] <= -0.000001 && no_negative) {
-          // cout << "no negative" << endl;
+          if (LOG) cout << "no negative" << endl;
           return false; // infeasible
         }
       }
@@ -256,12 +258,16 @@ int SimplexSolve(matrix& A, vector<double>& b, size_t row_start) {
       if(pivot_element.column==0) return 0;  // terminate: all coefficients are nonnegative or meet loop
       if(pivot_element.row==0) return 1; // terminate: no positive coefficients for the rest rows -> infinity
 
-      cout << "SimplexSolve round " << ++count << ":" << endl;
-      printAb(" A b:", A, b);
-      cout << "......., row:" << pivot_element.row << ", col:" << pivot_element.column << ", val:" << A[pivot_element.row][pivot_element.column] << endl;
+      if (LOG) {
+        cout << "SimplexSolve round " << ++count << ":" << endl;
+        printAb(" A b:", A, b);
+        cout << "......., row:" << pivot_element.row << ", col:" << pivot_element.column << ", val:" << A[pivot_element.row][pivot_element.column] << endl;
+      }
       bool feasible = SimplexProcessPivotElement(A, b, pivot_element, row_start);
-      cout << "feasible: " << feasible << endl;
-      cout << endl << endl;
+      if (LOG) {
+        cout << "feasible: " << feasible << endl;
+        cout << endl << endl;
+      }
       if (!feasible) return -1;
     }
 
@@ -275,11 +281,11 @@ int SimplexSolve(matrix& A, vector<double>& b, size_t row_start) {
         else A[i][j] = 0;
       }
       if(b[i] >= 0.000001 && no_positive) {
-        cout << "no positive, i=" << i << endl;
+        if (LOG) cout << "no positive, i=" << i << endl;
         return false; // infeasible
       }
       if(b[i] <= -0.000001 && no_negative) {
-        cout << "no negative" << endl;
+        if (LOG) cout << "no negative" << endl;
         return false; // infeasible
       }
     }
@@ -368,13 +374,17 @@ pair<matrix, vector<double> > solve_phase_i(
       newB[0] -= newB[2+i];
     }
 
-    cout << "Phase I, after pricing out:" << endl;
-    printAb("A, b:", newA, newB);
+    if (LOG) {
+      cout << "Phase I, after pricing out:" << endl;
+      printAb("A, b:", newA, newB);
+    }
 
     // solve the phase I problem
     SimplexSolve(newA, newB, newB.size() - n);
-    cout << "Phase I, after solve:" << endl;
-    printAb("A, b:", newA, newB);
+    if (LOG) {
+      cout << "Phase I, after solve:" << endl;
+      printAb("A, b:", newA, newB);
+    }
 
     // check feasibility,  
     // if b[0] < -0.000001, then there is no feasible solution
@@ -414,22 +424,23 @@ pair<int, vector<double>> solve_diet_problem(
   pair<matrix, vector<double> > res = solve_phase_i(n, m, A, b, c);
   matrix newA = res.first;
   vector<double> newB = res.second;
-  printAb("phase I result: ", newA, newB);
+  if (LOG) printAb("phase I result: ", newA, newB);
 
   // artificial still in basis
   if (newA.size() == n + 2) return {-1, vector<double>(m, 0)};
 
-  cout << "newB.size()-n=" << newB.size() -n  << ", n=" << n << endl << endl; 
+  if (LOG) cout << "newB.size()-n=" << newB.size() -n  << ", n=" << n << endl << endl; 
   int ret_code = SimplexSolve(newA, newB, newB.size() - n);
-  printAb("phase II result: ", newA, newB);
-  cout << "newB.size()-n=" << newB.size() -n  << ", n=" << n << endl; 
+  if(LOG) {
+    printAb("phase II result: ", newA, newB);
+    cout << "newB.size()-n=" << newB.size() -n  << ", n=" << n << endl; 
+  }
   if (ret_code != 0) return {ret_code, newB}; // fix infinity problem (tests/03)
   
-  cout << endl;
-  printAb("phase II result:", newA, newB);
-
-
-
+  if (LOG) {
+    cout << endl;
+    printAb("phase II result:", newA, newB);
+  }
 
   size_t newN = newA.size();
   size_t newM = newA[0].size();
@@ -452,7 +463,7 @@ pair<int, vector<double>> solve_diet_problem(
       newB.push_back(0);
     }
   }
-  printAb("new A b:", newA, newB);
+  if (LOG) printAb("new A b:", newA, newB);
 
   // if any element in c is zero, the unknown value is set as ZERO as the optimal
   // check test/07
@@ -465,15 +476,15 @@ pair<int, vector<double>> solve_diet_problem(
     }
   }
 
-  // cout << "before solve equation" << endl << endl;
+  if (LOG) cout << "before solve equation" << endl << endl;
   SolveEquation(newA, newB);
-  printAb("after Solve, new A b:", newA, newB);
+  if (LOG) printAb("after Solve, new A b:", newA, newB);
 
   // fix the bug for tests/02
   for(size_t i = 1; i < newB.size(); i++) {
     if (newB[i] < -0.000001) return {-1, vector<double>(m, 0)};
   }
-  // cout << "after solve equation" << endl << endl;
+  if (LOG) cout << "after solve equation" << endl << endl;
   // print("new A:", newA);
   // printRow("new res:", newB);
   vector<double> resVec(m, 0);
@@ -484,7 +495,7 @@ pair<int, vector<double>> solve_diet_problem(
     if (newB[i+1] < -0.000001) return {-1, resVec};
     resVec[i] = newB[i+1];
   }
-  // printRow("solution: ", resVec);
+  if(LOG) printRow("solution: ", resVec);
   return {0, resVec};
 }
 
