@@ -387,7 +387,14 @@ pair<matrix, vector<double> > solve_phase_i(
     matrix newA2(newN2, vector<double>(newM2, 0));
     for(size_t i = 0; i < newN2; i++) {
       for(size_t j = 0; j < newM2; j++) {
-        newA2[i][j] = newA[i+1][j+1];
+        if (newA[0][j+1] >= 0.000001) {
+          newA2[i][j] = 0;
+          vector<double> tmp(newM2, 0);
+          tmp[j] = 0;
+          newA2.push_back(tmp);
+        } else {
+          newA2[i][j] = newA[i+1][j+1];
+        }
       }
     }
     vector<double> newB2(newB.begin()+1, newB.end());
@@ -421,9 +428,20 @@ pair<int, vector<double>> solve_diet_problem(
   cout << endl;
   printAb("phase II result:", newA, newB);
 
+
+
+
+  size_t newN = newA.size();
+  size_t newM = newA[0].size();
+  // shrink the matrix
+  for(size_t i = 0; i  < newN; i++) {
+    for(size_t j = 0; j < newM; j++) {
+      if (newA[i][j] < 0.001 && newA[i][j] > -0.001) newA[i][j] = 0;
+    }
+  }
+
   // solve the equation
   // there ever had a bug here, because I write A[0] instead of newA[0]
-  size_t newM = newA[0].size();
   for(size_t j = 1; j < newM; j++) {
     if(newA[0][j] > 0) {
       vector<double> tmp(newM, 0);
