@@ -37,7 +37,16 @@ The problem in the algorithm is that I did not infer conclusion 2).
 ### Bugfix
   set all variables in conclusion 2) as ZERO.
 
+## Analysis on commit 2db2758100086cf272ba8e522934137d221e75c6
+From the tests/48 of ad_allocation problem, I found out that the assumption on tests/07
+```  
+// if any element in c is zero, the unknown value is set as ZERO as the optimal
+// check test/07
+```
+does not apply to ad_allocation problem.  I will delete the code in ad_allocation code first, and then need to 
+investigate the wierd  phenomenon.  When should I check this constraint, and how can I check it?
 
+(关于 主元列的问题， 如果 这一列没有主元列，且我们要求的最大值方程中 参数为0，则可以将该未知数设置为0)
 
 
 

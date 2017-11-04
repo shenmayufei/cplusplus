@@ -15,7 +15,7 @@ using namespace std;
 
 typedef vector<vector<double>> matrix;
 
-const bool LOG = true;
+const bool LOG = false;
 
 /****
  * the problem cannot be solved by duality (complementary slackness) after many tries,
@@ -30,16 +30,29 @@ const bool LOG = true;
 
 // helper functions
 void printRow(const string name, const vector<double>& v) {
-  if (!LOG) return;
   cout << name << "-" << v.size() << ": ";
   for(int i = 0; i < v.size(); i++) cout << v[i] << " ";
   cout << endl;
 }
 
+void print(const string name, const matrix &A) {
+  int n = A.size();
+  int m = A[0].size();
+  cout << name << " " << n << "X" << m << endl;
+  std::cout.precision(10);
+  for (int i = 0; i < n; i++){
+    cout << "[";
+    for(int j = 0; j < m; j++) cout << A[i][j] << " ";
+    cout << "]\n";
+  }
+}
+
+
 void printAb(const string name, const matrix &A, const vector<double>& b) {
   int n = A.size();
   int m = A[0].size();
   cout << name << " " << n << "X" << m << endl;
+  std::cout.precision(10);
   for (int i = 0; i < n; i++){
     cout << "[";
     for(int j = 0; j < m; j++) cout << A[i][j] << " ";
@@ -142,10 +155,8 @@ void SolveEquation(matrix& a, vector<double>& b) {
         ProcessPivotElement(a, b, pivot_element);
         MarkPivotElementUsed(pivot_element, used_rows, used_columns);
 
-        if (LOG) {
-          cout << "SolveEquation step " << step << endl;
-          printAb("A b:", a, b);
-        }
+        if (LOG) cout << "SolveEquation step " << step << endl;
+        // printAb("A b:", a, b);
     }
 }
  /********************************************* 
@@ -182,7 +193,7 @@ Position SimplexSelectPivotElement(
     // select row (which is most easily overflowed as the variable increases)
     double min_div = numeric_limits<double>::max();
     for(size_t i = row_start; i < n; i++) {
-      if (a[i][p_col] <= 0) continue;  // not satisfactory
+      if (a[i][p_col] <= -0.000001) continue;  // not satisfactory
       if (b[i] < -0.000001) continue;  // allow degeneration (ZERO)
       double tmp = b[i] / a[i][p_col];
       if (tmp < min_div) {
@@ -216,6 +227,7 @@ bool SimplexProcessPivotElement(matrix &a, vector<double> &b, const Position &pi
           a[i][j] -= multBy * a[pivot_element.row][j];
          
         b[i] -= multBy * b[pivot_element.row];
+        if (b[i] < 0.000001 && b[i] > -0.000001) b[i] = 0; // correlation
     }
 
     return true;
@@ -237,9 +249,10 @@ int SimplexSolve(matrix& A, vector<double>& b, size_t row_start) {
         for(size_t j = 0; j < m; j++){
           if(A[i][j] >= 0.000001) no_positive = false;  // exist some positive
           else if(A[i][j] <= -0.000001) no_negative = false; // exist some negative, namely not positve
+          else A[i][j] = 0;
         }
         if(b[i] >= 0.000001 && no_positive) {
-          if (LOG)  cout << "no positive, i=" << i << endl;
+          if (LOG) cout << "no positive, i=" << i << endl;
           return false; // infeasible
         }
         if(b[i] <= -0.000001 && no_negative) {
@@ -257,7 +270,6 @@ int SimplexSolve(matrix& A, vector<double>& b, size_t row_start) {
         printAb(" A b:", A, b);
         cout << "......., row:" << pivot_element.row << ", col:" << pivot_element.column << ", val:" << A[pivot_element.row][pivot_element.column] << endl;
       }
-      
       bool feasible = SimplexProcessPivotElement(A, b, pivot_element, row_start);
       if (LOG) {
         cout << "feasible: " << feasible << endl;
@@ -273,6 +285,7 @@ int SimplexSolve(matrix& A, vector<double>& b, size_t row_start) {
       for(size_t j = 0; j < m; j++){
         if(A[i][j] >= 0.000001) no_positive = false;  // exist some positive
         else if(A[i][j] <= -0.000001) no_negative = false; // exist some negative, namely not positve
+        else A[i][j] = 0;
       }
       if(b[i] >= 0.000001 && no_positive) {
         if (LOG) cout << "no positive, i=" << i << endl;
@@ -368,15 +381,15 @@ pair<matrix, vector<double> > solve_phase_i(
       newB[0] -= newB[2+i];
     }
 
-    if(LOG) {
+    if (LOG) {
       cout << "Phase I, after pricing out:" << endl;
       printAb("A, b:", newA, newB);
     }
 
     // solve the phase I problem
     SimplexSolve(newA, newB, newB.size() - n);
-    if (LOG){
-      cout << "Phase I, after solve:" << endl; 
+    if (LOG) {
+      cout << "Phase I, after solve:" << endl;
       printAb("A, b:", newA, newB);
     }
 
@@ -423,52 +436,64 @@ pair<int, vector<double>> allocate_ads(
   // artificial still in basis
   if (newA.size() == n + 2) return {-1, vector<double>(m, 0)};
 
-  // cout << "newB.size()-n=" << newB.size() -n  << ", n=" << n << endl << endl; 
+  if (LOG) cout << "newB.size()-n=" << newB.size() -n  << ", n=" << n << endl << endl; 
   int ret_code = SimplexSolve(newA, newB, newB.size() - n);
-  // printAb("phase II result: ", newA, newB);
-  // cout << "newB.size()-n=" << newB.size() -n  << ", n=" << n << endl; 
+  if(LOG) {
+    printAb("phase II result: ", newA, newB);
+    cout << "newB.size()-n=" << newB.size() -n  << ", n=" << n << endl; 
+  }
   if (ret_code != 0) return {ret_code, newB}; // fix infinity problem (tests/03)
   
-  // cout << endl;
-  // printAb("phase II result:", newA, newB);
+  if (LOG) {
+    cout << endl;
+    printAb("phase II result:", newA, newB);
+  }
+
+  size_t newN = newA.size();
+  size_t newM = newA[0].size();
+  // shrink the matrix
+  for(size_t i = 0; i  < newN; i++) {
+    for(size_t j = 0; j < newM; j++) {
+      if (newA[i][j] < 0.001 && newA[i][j] > -0.001) newA[i][j] = 0;
+    }
+  }
 
   // solve the equation
   // there ever had a bug here, because I write A[0] instead of newA[0]
-  size_t newM = newA[0].size();
   for(size_t j = 1; j < newM; j++) {
-    vector<double> tmp(newM, 0);
     if(newA[0][j] > 0) {
-        newA[0][j] = 0;
-        tmp[j] = 1;
-    }
-    newA.push_back(tmp);
-    newB.push_back(0);
-  }
-  if(LOG) {
-    printAb("new A B:", newA, newB);
-  }
-
-  // if any element in c is zero, the unknown value is set as ZERO as the optimal
-  // check test/07
-  for(size_t i = 0; i < m; i++) {
-    if (c[i] == 0) {
       vector<double> tmp(newM, 0);
-      tmp[i+1] = 1;
+      // for(size_t k = 0; k < newA.size(); k++) newA[k][j] = 0;
+      // newA[0][j] = 0;
+      tmp[j] = 1;
       newA.push_back(tmp);
       newB.push_back(0);
     }
   }
+  if (LOG) printAb("new A b:", newA, newB);
 
-  // cout << "before solve equation" << endl << endl;
+  // // if any element in c is zero, the unknown value is set as ZERO as the optimal
+  // // check test/07
+  // for(size_t i = 0; i < m; i++) {
+  //   if (c[i] == 0) {
+  //     vector<double> tmp(newM, 0);
+  //     tmp[i+1] = 1;
+  //     newA.push_back(tmp);
+  //     newB.push_back(0);
+  //   }
+  // }
+
+  if (LOG) cout << "before solve equation" << endl << endl;
   SolveEquation(newA, newB);
+  if (LOG) printAb("after Solve, new A b:", newA, newB);
+
   // fix the bug for tests/02
   for(size_t i = 1; i < newB.size(); i++) {
     if (newB[i] < -0.000001) return {-1, vector<double>(m, 0)};
   }
-  if(LOG) {
-    cout << "after solve equation" << endl << endl;
-    printAb("new AB:", newA, newB);
-  }
+  if (LOG) cout << "after solve equation" << endl << endl;
+  // print("new A:", newA);
+  // printRow("new res:", newB);
   vector<double> resVec(m, 0);
   for(size_t i = 0; i < m; i++) {
     // expected form: canonical form
