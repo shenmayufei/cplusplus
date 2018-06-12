@@ -20,7 +20,12 @@ int main() {
         {1.0, 2.0},
         {3.0, 4.0},
     };
-    vector<vector<double>> d (2*S.size(), vector<double>(2*S.size()));
+    size_t N = S.size();
+    vector<vector<double>> d (2*N, vector<double>(2*N));
+    for(size_t i = 0; i < N-1; i++) {
+        
+    }
+    
     auto L = primitive_clustering(S, d);
     std::cout << "L size: " << L.size() << std::endl;
 }
