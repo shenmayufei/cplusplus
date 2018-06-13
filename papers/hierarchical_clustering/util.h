@@ -3,7 +3,13 @@
 
 #include<iostream>
 #include<vector>
+#include<tuple>
 
-std::vector<size_t> flatten(const std::vector<std::vector<size_t> >& S,  const std::vector<size_t>& sizes, size_t idx);
+using std::tuple;
+using std::vector;
+
+vector<size_t> flatten(const vector<vector<size_t> >& S,  const vector<size_t>& sizes, size_t idx);
+
+double calcDistance(const vector<double>& a, const vector<double>& b);
 
 #endif
