@@ -19,13 +19,24 @@ struct ConvertGSMNetworkProblemToSat {
     {  }
 
     void printEquisatisfiableSatFormula() {
-        // This solution prints a simple satisfiable formula
-        // and passes about half of the tests.
-        // Change this function to solve the problem.
-        cout << "3 2" << endl;
-        cout << "1 2 0" << endl;
-        cout << "-1 -2 0" << endl;
-        cout << "1 -2 0" << endl;
+        int numVar = numVertices * 3;
+        vector<vector<int> > formulas;
+        for(int i = 0; i < numVertices; i++) {
+            formulas.push_back(vector<int>{3*i+1, 3*i+2, 3*i+3});
+        }
+        for(vector<Edge>::const_iterator it = edges.begin(); it < edges.end(); it++) {
+            int from = it->from - 1;
+            int to = it->to - 1;
+            formulas.push_back(vector<int>{-(from * 3 + 1), to * 3 + 2, to * 3 + 3});
+            formulas.push_back(vector<int>{to * 3 + 1, - (from * 3+ 2), to * 3 + 3});
+            formulas.push_back(vector<int>{to * 3 + 1, to * 3 + 2, -(from * 3 + 3)});
+        }
+
+        cout << formulas.size() << " " << numVar << endl;
+        for(auto item : formulas){
+            for(auto val : item) cout << val << " ";
+            cout << 0 << endl;
+        }
     }
 };
 
