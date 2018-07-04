@@ -27,9 +27,9 @@ struct ConvertGSMNetworkProblemToSat {
         for(vector<Edge>::const_iterator it = edges.begin(); it < edges.end(); it++) {
             int from = it->from - 1;
             int to = it->to - 1;
-            formulas.push_back(vector<int>{-(from * 3 + 1), to * 3 + 2, to * 3 + 3});
-            formulas.push_back(vector<int>{to * 3 + 1, - (from * 3+ 2), to * 3 + 3});
-            formulas.push_back(vector<int>{to * 3 + 1, to * 3 + 2, -(from * 3 + 3)});
+            formulas.push_back(vector<int>{-(from * 3 + 1), -(to * 3 + 1)});
+            formulas.push_back(vector<int>{-(from * 3 + 2), -(to * 3 + 2)});
+            formulas.push_back(vector<int>{-(from * 3 + 3), -(to * 3 + 3)});
         }
 
         cout << formulas.size() << " " << numVar << endl;
