@@ -2,91 +2,150 @@
 #include <vector>
 #include <map>
 
-
 using namespace std;
 
 struct Edge {
-    int from;
-    int to;
+	int from;
+	int to;
 };
 
 bool operator<(const Edge& a, const Edge& b) {
-    if (a.from < b.from) return true;
-    if (a.from > b.from) return false;
-    return a.to < b.to;
+	if (a.from < b.from) return true;
+	if (a.from > b.from) return false;
+	return a.to < b.to;
 }
 
 struct ConvertHampathToSat {
-    int numVertices;
-    vector<Edge> edges;
+	int numVertices;
+	vector<Edge> edges;
 
-    ConvertHampathToSat(int n, int m) :
-        numVertices(n),
-        edges(m)
-    {  }
+	ConvertHampathToSat(int n, int m) :
+		numVertices(n),
+		edges(m)
+	{  }
 
-    void printEquisatisfiableSatFormula() {
-        map<Edge, bool> tempEdgeMap;
+	// // trim removes vertices with only ONE edge recursively
+	// // if it finds out >=3 vertices with only ONE edge, return false
+	// bool trim(const int numVertices, const vector<Edge>& edges, vector<map<int,bool> >& v2e, vector<bool>& vertexDisabled, vector<bool>& edgeDisabled) {
+	// 	vector<vector<int> > edgeSizeStats(2, vector<int>()); // calculate how many vertices have only zero/one edge
+	// 	for(int i = 0; i < numVertices; i++) {
+	// 		vector<int>& vec = v2e[i];
+	// 		if (vec.size() < 2) edgeSizeStats[vec.size()].push_back(i);
+	// 	}
+	// 	if (edgeSizeStats[0].size() > 0) return false;
+	// 	if (edgeSizeStats[1].size() > 2) return false;
 
-        for(vector<Edge>::const_iterator item = edges.begin(); item != edges.end(); item++) {
-            int from = item->from, to = item->to;
-            if (from > to) swap(from, to);
-            tempEdgeMap[Edge{from,to}] = true; // starts with zero
-        }
-        vector<Edge> newEdges;
-        newEdges.reserve(tempEdgeMap.size());
-        vector<vector<int> > v2e_out(numVertices, vector<int>());
-        vector<vector<int> > v2e_in(numVertices, vector<int>());
-        for(auto &item : tempEdgeMap) {
-            int from = item.first.from;
-            int to = item.first.to;
-            newEdges.push_back(Edge{from,to});
-            v2e_out[from-1].push_back(newEdges.size());
-            v2e_in[to-1].push_back(newEdges.size());
-            newEdges.push_back(Edge{to,from});
-            v2e_out[to-1].push_back(newEdges.size());
-            v2e_in[from-1].push_back(newEdges.size());
-        }
+	// 	int numVertexOfOneEdge = edgeSizeStats[1].size()
 
-        edges.swap(newEdges); // update uni-directional edges to var edges
+	// 	for(const auto vIdx : edgeSizeStats[1]) {
+	// 		for(const auto item : v2e[i]) {
+	// 			if !trimIdx(item.first, v2e, vertexDisabled, edgeDisabled, edgeSizeStats[1], numVertexOfOneEdge){
+	// 				return false;
+	// 			}
+	// 		}
+	// 	}
 
-        // generate formulas
-        vector<vector<int> > formulas;
-        for(int i = 0; i < edges.size(); i+=2) formulas.push_back(vector<int>{-i-1, -i-2}); // (not e_ij) OR (not e_ji) must be true, because one bi-directional edge can only be used ZERO or once
-        for(int i = 0; i < numVertices; i++) {
-            auto v = v2e_out[i];
-            v.insert(v.end(), v2e_in[i].begin(), v2e_in[i].end());
-            formulas.push_back(v);
-            if (v.size() >= 3) {  // any three edges, e1, e2, e3, must satisfy "not (e1 and e2 and e3)"
-                for(int j = 0; j < v.size()-2; j++) {
-                    for(int k = j+1; k < v.size()-1; k++) {
-                        for(int r = k+1; r < v.size(); r++) {
-                            formulas.push_back(vector<int>{-v[j], -v[k], -v[r]});
-                        }
-                    }
-                }
-            }
-        }
 
-        cout << formulas.size() << " " << edges.size() << endl;
-        for(vector<vector<int> >::const_iterator vec = formulas.begin(); vec != formulas.end(); vec++) {
-            for(auto &item : *vec) cout << item << " ";
-            cout << 0 << endl;
-        }
-    }
+	// }
+
+	void printEquisatisfiableSatFormula() {
+		vector<vector<int> > v2e(numVertices, vector<int>());
+		for (int i = 0; i < edges.size(); i++){
+			const Edge &e = edges[i];
+			v2e[e.from - 1][i] = true;
+			v2e[e.to - 1][i] = true;
+		}
+
+		vector<vector<int> > edgeSizeStats(2, vector<int>()); // calculate how many vertices have only zero/one edge
+		for(int i = 0; i < numVertices; i++) {
+			vector<int>& vec = v2e[i];
+			if (vec.size() < 2) edgeSizeStats[vec.size()].push_back(i);
+		}
+
+		// cout << "abc\n";
+
+		if (edgeSizeStats[0].size() > 0 || edgeSizeStats[1].size() > 2) { // unsatisifiable 
+			cout << "2 1" << endl;
+			cout << "1 0" << endl;
+			cout << "-1 0" << endl;
+			return;
+		}
+
+		// remove vertices with only one edge (we need hamiltonian cycle, not hamiltonian path)
+		// so that every vertex has two edges connected with others
+		vector<bool> edgeDisabled(edges.size(), false);
+		for(auto vIdx : edgeSizeStats[1]) {
+			for(auto eIdx : v2e[vIdx])
+				edgeDisabled[eIdx]=true;
+		}
+
+		vector<int> realEdges;  // 
+		for(int i = 0; i < edges.size(); i++) {
+			if (!edgeDisabled[i]) realEdges.push_back(i);
+		}
+		map<int, int> idxMapping;
+		for(int i = 0; i < realEdges.size(); i++) {
+			idxMapping[realEdges[i]+1] = i+1;
+		}
+
+		// re-construct v2e
+		for(auto &vec : v2e) {
+			vector<int> tmpVec;
+			for(auto eIdx: vec) {
+				if (edgeDisabled[eIdx]==false) {
+					tmpVec.push_back(idxMapping[eIdx+1]);
+				}
+			}
+			vec.swap(tmpVec);
+		}
+
+		// generate formulas
+		vector<vector<int>> formulas;
+
+		// add filter: every vertex must have 2 and only two edges used
+		for(auto &eVec: v2e) {
+			if (eVec.size() == 0) continue;
+			if (eVec.size() < 2 ) {
+				formulas.push_back(eVec);
+				continue;
+			}
+
+			// add filter: at least 2 (any n-1 edges chosen)
+			for(int offset = 0; offset < eVec.size(); offset++) {
+				vector<int> tmpVec(eVec.begin(), eVec.end());
+				tmpVec.erase(tmpVec.begin() + offset);
+				formulas.push_back(tmpVec);
+			}
+
+			// add filter: at most 2 (any 3 edges chosen)
+			for(int i = 0; i < eVec.size()-2; i++) {
+				for(int j = i+1; j < eVec.size() - 1; j++) {
+					for(int k = j+1; k < eVec.size(); k++) {
+						formulas.push_back(vector<int>{-eVec[i], -eVec[j], -eVec[k]});
+					}
+				}
+			}
+		}
+
+		cout << formulas.size() << " " << realEdges.size() << endl;
+		for (auto &vec : formulas) {
+			for (auto &item : vec) cout << item << " ";
+			cout << 0 << endl;
+		}
+	}
 };
 
 int main() {
-    ios::sync_with_stdio(false);
+	ios::sync_with_stdio(false);
 
-    int n, m;
-    cin >> n >> m;
-    ConvertHampathToSat converter(n, m);
-    for (int i = 0; i < m; ++i) {
-        cin >> converter.edges[i].from >> converter.edges[i].to;
-    }
+	int n, m;
+	cin >> n >> m;
+	ConvertHampathToSat converter(n, m);
+	for (int i = 0; i < m; ++i) {
+		cin >> converter.edges[i].from >> converter.edges[i].to;
+	}
 
-    converter.printEquisatisfiableSatFormula();
+	converter.printEquisatisfiableSatFormula();
 
-    return 0;
+	return 0;
 }
