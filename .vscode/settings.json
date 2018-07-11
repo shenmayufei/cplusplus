@@ -41,6 +41,18 @@
         "hash_map": "cpp",
         "string_view": "cpp",
         "hashtable": "cpp",
-        "__tuple": "cpp"
+        "__tuple": "cpp",
+        "ios": "cpp",
+        "xlocnum": "cpp",
+        "climits": "cpp",
+        "xstring": "cpp",
+        "forward_list": "cpp",
+        "system_error": "cpp",
+        "xhash": "cpp",
+        "xiosbase": "cpp",
+        "xtree": "cpp",
+        "xutility": "cpp",
+        "ostream": "cpp",
+        "xlocale": "cpp"
     }
 }
