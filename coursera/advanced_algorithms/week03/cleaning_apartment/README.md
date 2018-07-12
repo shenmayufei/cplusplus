@@ -16,4 +16,7 @@ we define all condition as a matrix `vector<vector<bool>> m`, constraints can be
 
 1. for any j, only one of `m[0][j], m[1][j], ..., m[n-1][j]` is true
 2. for any i, only one of `m[i][0], m[i][1], ..., m[i][n-1]` is true
-3. how edge and m[i][j] are related?
+3. how edge and m[i][j] are related?  
+   if vertex u and v are not connected, then for any j, at most one of (m[u][j], m[v][j+1]) can be true, so are (m[v][j], m[u][j+1])
+
+It works!!!
