@@ -1,7 +1,7 @@
 #include <ios>
 #include <iostream>
 #include <vector>
-#include <algorithm>
+#include <numeric>
 
 using namespace std;
 
@@ -11,6 +11,21 @@ struct ConvertILPToSat {
 
     ConvertILPToSat(int n, int m) : A(n, vector<int>(m)), b(n)
     {}
+
+    // generateConditionsAllMin: generate condition, if sum of all min > b
+    vector<vector<int> > generateConditionsAllMin(const vector<int>& ids, const vector<int>& min, const int b) {
+      vector<vector<int> > result;
+      int total = accumulate(min.begin(), min.end(), 0);
+      if (total > b) {
+        vector<int> row;
+        for(int i = 0; i < min.size(); i++) {
+          int ele = min[i] < 0 ? ids[i] + 1: -ids[i]-1;
+          row.push_back(ele);
+        }
+        result.push_back(row);
+      }
+      return result;
+    }
 
     // generateConditionsAllMax: generate condition, if sum of all max > b
     vector<vector<int> > generateConditionsAllMax(const vector<int>& ids, const vector<int>& max, const int b) {
@@ -24,7 +39,6 @@ struct ConvertILPToSat {
           int ele = max[i] > 0? -ids[i]-1: ids[i] + 1;
           row.push_back(ele);
         }
-
         result.push_back(row);
       }
       return result;
@@ -59,7 +73,7 @@ struct ConvertILPToSat {
       if (max.size() < 3) return result;
 
       for(int i = 0; i < max.size() -1 ; i++) {
-        for(int j = i + 1; j< max.size(); j++) {
+        for(int j = i + 1; j < max.size(); j++) {
           int newb = b - min[i] - min[j];
           vector<int> newids;
           vector<int> newmax;
@@ -84,15 +98,17 @@ struct ConvertILPToSat {
       vector<int> max(coefficients.size(), 0);
       vector<int> min(coefficients.size(), 0);
       for(int i = 0; i < coefficients.size(); i++) {
-        if (coefficients[i] > 0) max[i] = coefficients[i];
-        else min[i] = -coefficients[i];
+        if (coefficients[i] > 0) max[i] = coefficients[i]; 
+        else min[i] = coefficients[i];
       }
 
       // handle data size is one
       if (ids.size() == 1) {
-          vector<vector<int> > res = generateConditionsAllMax(ids, max, b);
-          for(auto vec : res) result.push_back(vec);
-          return result;
+        vector<vector<int> > res = generateConditionsAllMax(ids, max, b);
+        for(auto vec : res) result.push_back(vec);
+        res = generateConditionsAllMin(ids, min, b);
+        for(auto vec : res) result.push_back(vec);
+        return result;
       }
 
       // check all max
@@ -102,6 +118,9 @@ struct ConvertILPToSat {
         for(auto vec : res) result.push_back(vec);
         // one min
         res = generateConditionsOneMin(ids, max, min, b);
+        for(auto vec : res) result.push_back(vec);
+        // all min
+        res = generateConditionsAllMin(ids, min, b);
         for(auto vec : res) result.push_back(vec);
       }
 
@@ -115,6 +134,9 @@ struct ConvertILPToSat {
         for(auto vec : res) result.push_back(vec);
         // two min
         res = generateConditionsTwoMin(ids, max, min, b);
+        for(auto vec : res) result.push_back(vec);
+        // all min
+        res = generateConditionsAllMin(ids, min, b);
         for(auto vec : res) result.push_back(vec);
       }
       return result;
@@ -135,8 +157,18 @@ struct ConvertILPToSat {
               coefficients.push_back(ai[j]);
             }
           }
+          // cout << "<<<<<<<<<<<<<<<<<<<<<<i=" << i << endl;
           auto res = generateConditions(ids, coefficients, bi);
+          // cout << "----------------------i=" << i << ", result len=" << res.size() << endl;
           formulas.insert(formulas.end(), res.begin(), res.end());
+      }
+
+      if(formulas.size() == 0) formulas.push_back(vector<int>{1, -1});
+
+      cout << formulas.size() << " " << A[0].size() << endl;
+      for(auto &vec : formulas) {
+        for(auto item : vec) cout << item << " ";
+        cout << 0 << endl;
       }
     }
 };
