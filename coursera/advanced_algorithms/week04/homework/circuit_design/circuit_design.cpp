@@ -6,6 +6,23 @@ struct Clause {
     int secondVar;
 };
 
+// getGraphIndex returns corresponding index of val in graph
+// (1, false) => 0
+// (1, true) => 1
+// (2, false) => 2
+// (2, true) => 3
+// (n, false) => n * 2 - 2
+// (n, true) => n * 2 - 1
+// (-1, false) => 1
+// (-1, true) => 0
+// (-n, false) => n * 2 - 1
+// (-n, true) => n * 2 - 2
+int getGraphIndex(int val, bool negate) {
+    if (negate) val = - val;
+    if (val > 0) return val * 2 - 2;
+    else return val * 2 - 1;
+}
+
 struct TwoSatisfiability {
     int numVars;
     vector<Clause> clauses;
@@ -16,35 +33,11 @@ struct TwoSatisfiability {
     {  }
 
     bool isSatisfiable(vector<int>& result) {
-        // This solution tries all possible 2^n variable assignments.
-        // It is too slow to pass the problem.
-        // Implement a more efficient algorithm here.
-        for (int mask = 0; mask < (1 << numVars); ++mask) {
-            for (int i = 0; i < numVars; ++i) {
-                result[i] = (mask >> i) & 1;
-            }
-
-            bool formulaIsSatisfied = true;
-
-            for (const Clause& clause: clauses) {
-                bool clauseIsSatisfied = false;
-                if (result[abs(clause.firstVar) - 1] == (clause.firstVar < 0)) {
-                    clauseIsSatisfied = true;
-                }
-                if (result[abs(clause.secondVar) - 1] == (clause.secondVar < 0)) {
-                    clauseIsSatisfied = true;
-                }
-                if (!clauseIsSatisfied) {
-                    formulaIsSatisfied = false;
-                    break;
-                }
-            }
-
-            if (formulaIsSatisfied) {
-                return true;
-            }
+        vector<vector<int> > graph(numVars * 2, vector<int>());  // postive first, negative second
+        for(const auto& c : clauses) {
+            graph[getGraphIndex(c.firstVar, true)].push_back(getGraphIndex(c.secondVar, false));
+            graph[getGraphIndex(c.secondVar, true)].push_back(getGraphIndex(c.firstVar, false));
         }
-        return false;
     }
 };
 
