@@ -53,6 +53,8 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "ostream": "cpp",
-        "xlocale": "cpp"
+        "xlocale": "cpp",
+        "chrono": "cpp",
+        "limits": "cpp"
     }
 }
