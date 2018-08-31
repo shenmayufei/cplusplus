@@ -13,3 +13,4 @@ a.out
 *.lck
 *.lock
 main
+*.swp

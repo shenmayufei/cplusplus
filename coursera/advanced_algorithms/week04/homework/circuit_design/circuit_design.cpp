@@ -20,7 +20,7 @@ struct Clause {
 int getGraphIndex(int val, bool negate) {
     if (negate) val = - val;
     if (val > 0) return val * 2 - 2;
-    else return val * 2 - 1;
+    else return -val * 2 - 1;
 }
 
 void postOrderDFSHelper(const vector<vector<int> >& g, int v, vector<bool>& visited, vector<int>& polist) {
@@ -29,6 +29,7 @@ void postOrderDFSHelper(const vector<vector<int> >& g, int v, vector<bool>& visi
     for(const auto u : g[v]) {
         postOrderDFSHelper(g, u, visited, polist);
     }
+    // cout << "v = " << v << endl;
     polist.push_back(v);
 }
 
@@ -66,6 +67,7 @@ struct TwoSatisfiability {
     bool isSatisfiable(vector<int>& result) {
         vector<vector<int> > graph(numVars * 2, vector<int>());  // postive first, negative second
         for(const auto& c : clauses) {
+            // cout << "c = (" << c.firstVar << ", " << c.secondVar << ")"  << endl;
             graph[getGraphIndex(c.firstVar, true)].push_back(getGraphIndex(c.secondVar, false));
             graph[getGraphIndex(c.secondVar, true)].push_back(getGraphIndex(c.firstVar, false));
         }
@@ -92,19 +94,18 @@ struct TwoSatisfiability {
                 break;
             }
         }
-
         // not satisfiable
         if (!satisfiable) {
             return false;
-        } 
-        
+        }
+
         // satisfiable
         vector<bool> alreadySet(numVars, false);
         for(auto v : postOrderList) {
             int originV = v / 2;
-            bool isPositive = v - originV * 2 == 0;
+            bool isNeg = v - originV * 2 == 1;
             if (alreadySet[originV]) continue;
-            result[originV] = isPositive;
+            result[originV] = isNeg;
             alreadySet[originV] = true;
         }
         return true;
