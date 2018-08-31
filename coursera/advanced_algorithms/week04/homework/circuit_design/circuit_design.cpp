@@ -23,6 +23,37 @@ int getGraphIndex(int val, bool negate) {
     else return val * 2 - 1;
 }
 
+// postOrder calculates a post order list of graph g
+vector<int> postOrder(const vector<vector<int> >& g) {
+    int numVertices = g.size();
+    vector<int> polist;
+    polist.reserve(numVertices);
+    vector<bool> visited(numVertices, false);
+    for(int v = 0; v < numVertices; v++) {
+        postOrderDFSHelper(g, v, visited, polist);
+    }
+    return polist;
+}
+
+void postOrderDFSHelper(const vector<vector<int> >& g, int v, vector<int>& visited, vector<int>& polist) {
+    if (visited[v]) return;
+    visited[v] = true;
+    for(const auto u : g[v]) {
+        postOrderDFSHelper(g, u, visited, polist);
+    }
+    polist.push_back(v);
+}
+
+void setSccDFSHelper(const vector<vector<int> >& g, int v, int root, vector<bool>& visited, vector<int>& scc) {
+    if (visited[v]) return;
+    visited[v] = true;
+    scc[v] = root;
+    for(const auto u: g[v]) {
+        setSccDFSHelper(g, u, root, visited, scc);
+    }
+}
+
+
 struct TwoSatisfiability {
     int numVars;
     vector<Clause> clauses;
@@ -38,6 +69,45 @@ struct TwoSatisfiability {
             graph[getGraphIndex(c.firstVar, true)].push_back(getGraphIndex(c.secondVar, false));
             graph[getGraphIndex(c.secondVar, true)].push_back(getGraphIndex(c.firstVar, false));
         }
+
+        // get reverse graph
+        vector<vector<int> > graphR(numVars * 2, vector<int>()); // reverse of graph
+        for(int u = 0; u < numVars * 2; u++) {
+            for(auto v : graph[u]) {
+                graphR[v].push_back(u);
+            }
+        }
+
+        vector<int> postOrderList = postOrder(graphR);
+        postOrderList.reverse(); // reverse post order
+        vector<bool> visited(numVars* 2, false);
+        vector<int> scc(numVars * 2, 0);
+        for(auto v : postOrderList) {
+            setSccDFSHelper(graph, v, v, visited, scc);
+        }
+        bool satisfiable = true;
+        for(int i = 0; i < numVars*2; i+=2) {
+            if (scc[i] == scc[i+1]) {
+                satisfiable = false;
+                break;
+            }
+        }
+
+        // not satisfiable
+        if (!satisfiable) {
+            return false;
+        } 
+        
+        // satisfiable
+        vector<bool> alreadySet(numVars, false);
+        for(auto v : postOrderList) {
+            int originV = v / 2;
+            bool isPositive = v - originV * 2 == 0;
+            if (alreadySet[originV]) continue;
+            result[originV] = isPositve;
+            alreadySet[originV] = true;
+        }
+        return true;
     }
 };
 
