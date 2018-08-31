@@ -23,6 +23,15 @@ int getGraphIndex(int val, bool negate) {
     else return val * 2 - 1;
 }
 
+void postOrderDFSHelper(const vector<vector<int> >& g, int v, vector<bool>& visited, vector<int>& polist) {
+    if (visited[v]) return;
+    visited[v] = true;
+    for(const auto u : g[v]) {
+        postOrderDFSHelper(g, u, visited, polist);
+    }
+    polist.push_back(v);
+}
+
 // postOrder calculates a post order list of graph g
 vector<int> postOrder(const vector<vector<int> >& g) {
     int numVertices = g.size();
@@ -33,15 +42,6 @@ vector<int> postOrder(const vector<vector<int> >& g) {
         postOrderDFSHelper(g, v, visited, polist);
     }
     return polist;
-}
-
-void postOrderDFSHelper(const vector<vector<int> >& g, int v, vector<int>& visited, vector<int>& polist) {
-    if (visited[v]) return;
-    visited[v] = true;
-    for(const auto u : g[v]) {
-        postOrderDFSHelper(g, u, visited, polist);
-    }
-    polist.push_back(v);
 }
 
 void setSccDFSHelper(const vector<vector<int> >& g, int v, int root, vector<bool>& visited, vector<int>& scc) {
@@ -79,7 +79,7 @@ struct TwoSatisfiability {
         }
 
         vector<int> postOrderList = postOrder(graphR);
-        postOrderList.reverse(); // reverse post order
+        reverse(postOrderList.begin(), postOrderList.end()); // reverse post order
         vector<bool> visited(numVars* 2, false);
         vector<int> scc(numVars * 2, 0);
         for(auto v : postOrderList) {
@@ -104,7 +104,7 @@ struct TwoSatisfiability {
             int originV = v / 2;
             bool isPositive = v - originV * 2 == 0;
             if (alreadySet[originV]) continue;
-            result[originV] = isPositve;
+            result[originV] = isPositive;
             alreadySet[originV] = true;
         }
         return true;
