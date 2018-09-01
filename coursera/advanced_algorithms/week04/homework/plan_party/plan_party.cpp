@@ -31,14 +31,13 @@ void dfs(const Graph &tree, int vertex, std::vector<std::vector<int> >& cache, s
     if (visited[vertex]) return;
     visited[vertex] = true;
     cache[vertex][1] = tree[vertex].weight;
-    if (tree[vertex].children.size() == 0) {
-        return;
-    }
     for(int child : tree[vertex].children) {
+        if (visited[child]) continue;
         dfs(tree, child, cache, visited);
         cache[vertex][0] += std::max(cache[child][0], cache[child][1]);
         cache[vertex][1] += cache[child][0];
     }
+    std::cout << "cache[" << vertex << "] = {" << cache[vertex][0] << ", " << cache[vertex][1] << std::endl;
 }
 
 int MaxWeightIndependentTreeSubset(const Graph &tree) {
