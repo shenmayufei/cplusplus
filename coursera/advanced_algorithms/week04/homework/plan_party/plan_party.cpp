@@ -50,7 +50,7 @@ int MaxWeightIndependentTreeSubset(const Graph &tree) {
     for(int v = 0; v < size; v++) dfs(tree, v, cache, visited);
     int max = 0;
     for(auto& vec : cache) {
-        max = std::max(vec[0], vec[1], max);
+        max = std::max(max, std::max(vec[0], vec[1]));
     }
     return max;
 }
@@ -58,22 +58,22 @@ int MaxWeightIndependentTreeSubset(const Graph &tree) {
 int main() {
     // This code is here to increase the stack size to avoid stack overflow
     // in depth-first search.
-    const rlim_t kStackSize = 64L * 1024L * 1024L;  // min stack size = 64 Mb
-    struct rlimit rl;
-    int result;
-    result = getrlimit(RLIMIT_STACK, &rl);
-    if (result == 0)
-    {
-        if (rl.rlim_cur < kStackSize)
-        {
-            rl.rlim_cur = kStackSize;
-            result = setrlimit(RLIMIT_STACK, &rl);
-            if (result != 0)
-            {
-                fprintf(stderr, "setrlimit returned result = %d\n", result);
-            }
-        }
-    }
+    // const rlim_t kStackSize = 64L * 1024L * 1024L;  // min stack size = 64 Mb
+    // struct rlimit rl;
+    // int result;
+    // result = getrlimit(RLIMIT_STACK, &rl);
+    // if (result == 0)
+    // {
+    //     if (rl.rlim_cur < kStackSize)
+    //     {
+    //         rl.rlim_cur = kStackSize;
+    //         result = setrlimit(RLIMIT_STACK, &rl);
+    //         if (result != 0)
+    //         {
+    //             fprintf(stderr, "setrlimit returned result = %d\n", result);
+    //         }
+    //     }
+    // }
 
     // Here begins the solution
     Graph tree = ReadTree();
