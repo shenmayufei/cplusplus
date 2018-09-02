@@ -27,7 +27,7 @@ int getLastNodeIdx(int k) {
     return k >> 20;
 }
 int getNodesIdx(int k) {
-    return k & (1 << 21 - 1);
+    return k & ((1 << 20) - 1);
 }
 
 int genKey(int nodeIdx, int prevNodesIdx) {
