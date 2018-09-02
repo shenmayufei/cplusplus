@@ -36,7 +36,7 @@ int genKey(int nodeIdx, int prevNodesIdx) {
 
 std::pair<int, vector<int> > optimal_path(const Matrix& graph) {
     size_t n = graph.size();
-    unordered_map<int, std::pair<int, vector<int> > > cache;
+    unordered_map<int, std::pair<int, vector<int> > > cache;  // use unordered_map to improve performance
     cache[genKey(0, 1)] = std::make_pair(0, vector<int>{0});
     for(int s = 1; s < n; s++) { // i is the number of elements in the array (except starting point)
         unordered_map<int, std::pair<int, vector<int> > > newCache;
