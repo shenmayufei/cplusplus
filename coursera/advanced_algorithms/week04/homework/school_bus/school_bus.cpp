@@ -1,11 +1,11 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <utility>
 
 using std::vector;
-using std::map;
+using std::unordered_map;
 typedef vector<vector<int> > Matrix;
 
 const int INF = 1e9;
@@ -23,20 +23,31 @@ Matrix read_data() {
     return graph;
 }
 
+int keyFirst(int k) {
+    return k >> 20;
+}
+int keySecond(int k) {
+    return k & (1 << 21 - 1);
+}
+
+int genKey(int first, int second) {
+    return first << 20 | second;
+}
+
 std::pair<int, vector<int> > optimal_path(const Matrix& graph) {
     size_t n = graph.size();
-    map<std::pair<int,int>, std::pair<int, vector<int> > > cache;
-    cache[std::make_pair(1<<0, 0)] = std::make_pair(0, vector<int>{0});
+    unordered_map<int, std::pair<int, vector<int> > > cache;
+    cache[genKey(1<<0, 0)] = std::make_pair(0, vector<int>{0});
     for(int s = 1; s < n; s++) { // i is the number of elements in the array (except starting point)
-        map<std::pair<int,int>, std::pair<int, vector<int> > > newCache;
+        unordered_map<int, std::pair<int, vector<int> > > newCache;
         for(int j = 1; j < n; j++) {
             int keyExist = 1 << j;
             for (auto& kv : cache) {
-                int lastNodeIdx = kv.first.second; 
+                int lastNodeIdx = keySecond(kv.first);
                 if (lastNodeIdx == j) continue;
-                int newFirstKey = kv.first.first | keyExist; // get the new key
-		if (newFirstKey == kv.first.first || graph[lastNodeIdx][j] == INF) continue; // already in path or infinity
-                auto key = std::make_pair(newFirstKey, j);
+                int newFirstKey = keyFirst(kv.first) | keyExist; // get the new key
+		        if (newFirstKey == keyFirst(kv.first) || graph[lastNodeIdx][j] == INF) continue; // already in path or infinity
+                auto key = genKey(newFirstKey, j);
                 int sum = kv.second.first + graph[lastNodeIdx][j];
 
                 auto prevIt = newCache.find(key);
@@ -53,9 +64,9 @@ std::pair<int, vector<int> > optimal_path(const Matrix& graph) {
     }
 
     int totalDist = INF;
-    std::pair<int, int> minKey;
+    int minKey;
     for(auto& kv : cache) {
-        int lastNodeIdx = kv.first.second;
+        int lastNodeIdx = keySecond(kv.first);
         if (graph[lastNodeIdx][0]==INF) continue;
         int total = kv.second.first + graph[lastNodeIdx][0];
         if (total >= totalDist) continue;
