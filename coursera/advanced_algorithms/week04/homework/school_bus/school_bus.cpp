@@ -35,7 +35,7 @@ std::pair<int, vector<int> > optimal_path(const Matrix& graph) {
                 int lastNodeIdx = kv.first.second; 
                 if (lastNodeIdx == j) continue;
                 int newFirstKey = kv.first.first | keyExist; // get the new key
-                if (graph[lastNodeIdx][j] == INF) continue; // infinity
+		if (newFirstKey == kv.first.first || graph[lastNodeIdx][j] == INF) continue; // already in path or infinity
                 auto key = std::make_pair(newFirstKey, j);
                 int sum = kv.second.first + graph[lastNodeIdx][j];
 
@@ -72,7 +72,7 @@ void print_answer(const std::pair<int, vector<int> >& answer) {
         return;
     const vector<int>& path = answer.second;
     for (size_t i = 0; i < path.size(); ++i)
-        std::cout << path[i] << " ";
+        std::cout << path[i] + 1 << " ";
     std::cout << "\n";
 }
 
