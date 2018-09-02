@@ -1,8 +1,11 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <map>
+#include <utility>
 
 using std::vector;
+using std::map;
 typedef vector<vector<int> > Matrix;
 
 const int INF = 1e9;
@@ -21,43 +24,46 @@ Matrix read_data() {
 }
 
 std::pair<int, vector<int> > optimal_path(const Matrix& graph) {
-    // This solution tries all the possible sequences of stops.
-    // It is too slow to pass the problem.
-    // Implement a more efficient algorithm here.
     size_t n = graph.size();
-    vector<int> p(n);
-    for (size_t i = 0; i < n; ++i)
-        p[i] = i;
+    map<std::pair<int,int>, std::pair<int, vector<int> > > cache;
+    cache[std::make_pair(1<<0, 0)] = std::make_pair(0, vector<int>{0});
+    for(int s = 1; s < n; s++) { // i is the number of elements in the array (except starting point)
+        map<std::pair<int,int>, std::pair<int, vector<int> > > newCache;
+        for(int j = 1; j < n; j++) {
+            int keyExist = 1 << j;
+            for (auto& kv : cache) {
+                int lastNodeIdx = kv.first.second; 
+                if (lastNodeIdx == j) continue;
+                int newFirstKey = kv.first.first | keyExist; // get the new key
+                if (graph[lastNodeIdx][j] == INF) continue; // infinity
+                auto key = std::make_pair(newFirstKey, j);
+                int sum = kv.second.first + graph[lastNodeIdx][j];
 
-    vector<int> best_path;
-    int best_ans = INF;
+                auto prevIt = newCache.find(key);
+                if (prevIt!=newCache.end()) {
+                    if (sum >= prevIt->second.first) continue; // new total is bigger than the old
+                }
 
-    do {
-        int cur_sum = 0;
-        bool ok = true;
-        for (size_t i = 1; i < n && ok; ++i)
-            if (graph[p[i - 1]][p[i]] == INF)
-                ok = false;
-            else
-                cur_sum += graph[p[i - 1]][p[i]];
-        if (graph[p.back()][p[0]] == INF)
-            ok = false;
-        else
-            cur_sum += graph[p.back()][p[0]];
-
-        if (!ok)
-            continue;
-        if (cur_sum < best_ans) {
-            best_ans = cur_sum;
-            best_path = p;
+                auto newValSecond = kv.second.second;
+                newValSecond.push_back(j);
+                newCache[key] = std::make_pair(sum, newValSecond);
+            }
         }
-    } while (std::next_permutation(p.begin(), p.end()));
+        cache = newCache; // update cache, all keys contain s+1 members
+    }
 
-    if (best_ans == INF)
-        best_ans = -1;
-    for (size_t i = 0; i < best_path.size(); ++i)
-        ++best_path[i];
-    return std::make_pair(best_ans, best_path);
+    int totalDist = INF;
+    std::pair<int, int> minKey;
+    for(auto& kv : cache) {
+        int lastNodeIdx = kv.first.second;
+        if (graph[lastNodeIdx][0]==INF) continue;
+        int total = kv.second.first + graph[lastNodeIdx][0];
+        if (total >= totalDist) continue;
+        minKey = kv.first;
+        totalDist = total;
+    }
+    if (totalDist==INF) return std::make_pair(-1, vector<int>{});
+    return std::make_pair(totalDist, cache[minKey].second);
 }
 
 void print_answer(const std::pair<int, vector<int> >& answer) {
