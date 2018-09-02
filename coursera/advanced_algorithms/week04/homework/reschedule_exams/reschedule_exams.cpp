@@ -2,10 +2,20 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <algorithm>
 using namespace std;
 
-bool dfs(const vector<vector<int> >& graph, vector<int>& recoloring, vector<vector<bool> >& colorUsage, int v) {
+struct comp {
+    comp(vector<vector<int> >* graph) { this->graph = graph; }
 
+    bool operator() (const int i, const int j){
+        return (*graph)[i].size() > (*graph)[j].size(); 
+    }
+
+    vector<vector<int> >* graph;
+};
+
+bool dfs(const vector<vector<int> >& graph, vector<int>& recoloring, vector<vector<bool> >& colorUsage, int v) {
     if (recoloring[v] >= 0) return true;
 
     // make a copy of coloring states, in case no color solutions can be found
@@ -14,9 +24,6 @@ bool dfs(const vector<vector<int> >& graph, vector<int>& recoloring, vector<vect
 
     // update node v's available coloring options, according to it's connected nodes' colors
     vector<bool> colorUsed = colorUsage[v];
-    for(auto u : graph[v]) {
-        if (recoloring[u] >= 0) colorUsed[recoloring[u]] = true; // the color is already used
-    }
     vector<int> unUsedColors;
     for(int i = 0; i < 3; i++) {
         if (!colorUsed[i]) unUsedColors.push_back(i);
@@ -29,6 +36,7 @@ bool dfs(const vector<vector<int> >& graph, vector<int>& recoloring, vector<vect
     for(auto c : unUsedColors) {
         recoloring[v] = c;
         colorUsage[v][c] = true;
+        for(auto u : graph[v]) colorUsage[u][c] = true;
         bool allTrue = true;
         for(auto u : graph[v]) {
             if (false == dfs(graph, recoloring, colorUsage, u)) {  // if any of the next node cannot be colored, try next solution
@@ -38,7 +46,12 @@ bool dfs(const vector<vector<int> >& graph, vector<int>& recoloring, vector<vect
         }
 
         // all next nodes are colored successfully
-        if (allTrue) return true; 
+        if (allTrue) {
+            return true; 
+        } else {  // recover the color usage
+            colorUsage[v][c] = false;
+            for(auto u : graph[v]) colorUsage[u][c] = false; 
+        } 
     }
 
     // recover coloring states when the solution doesn't work
@@ -67,11 +80,20 @@ string assign_new_colors(int n, vector<pair<int, int>> edges, string colors) {
         graph[e.first-1].push_back(e.second-1);
         graph[e.second-1].push_back(e.first-1);
     }
+
+    auto cmp = comp(&graph);
+    for(auto& out : graph) {
+        sort(out.begin(), out.end(), cmp);
+    }
+    vector<int> idxs(n, 0);
+    for(int i = 0; i < n; i++) idxs[i] = i;
+    sort(idxs.begin(), idxs.end(), cmp);
+
     for(size_t i = 0; i < n; i++) colorUsage[i][colorMap[colors[i]]] = true;
     vector<int> recoloring(n, -1);
     
     string result;
-    for(int i = 0; i < n; i++) if (false == dfs(graph, recoloring, colorUsage, 0)) return "";
+    for(auto idx : idxs) if (false == dfs(graph, recoloring, colorUsage, idx)) return "";
     for(int i = 0; i < n; i++) result.push_back("RGB"[recoloring[i]]);
     return result;
 }
