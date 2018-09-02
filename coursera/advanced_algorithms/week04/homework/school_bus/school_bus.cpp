@@ -23,31 +23,31 @@ Matrix read_data() {
     return graph;
 }
 
-int keyFirst(int k) {
+int getLastNodeIdx(int k) {
     return k >> 20;
 }
-int keySecond(int k) {
+int getNodesIdx(int k) {
     return k & (1 << 21 - 1);
 }
 
-int genKey(int first, int second) {
-    return first << 20 | second;
+int genKey(int nodeIdx, int prevNodesIdx) {
+    return nodeIdx << 20 | prevNodesIdx;
 }
 
 std::pair<int, vector<int> > optimal_path(const Matrix& graph) {
     size_t n = graph.size();
     unordered_map<int, std::pair<int, vector<int> > > cache;
-    cache[genKey(1<<0, 0)] = std::make_pair(0, vector<int>{0});
+    cache[genKey(0, 1)] = std::make_pair(0, vector<int>{0});
     for(int s = 1; s < n; s++) { // i is the number of elements in the array (except starting point)
         unordered_map<int, std::pair<int, vector<int> > > newCache;
         for(int j = 1; j < n; j++) {
             int keyExist = 1 << j;
             for (auto& kv : cache) {
-                int lastNodeIdx = keySecond(kv.first);
+                int lastNodeIdx = getLastNodeIdx(kv.first);
                 if (lastNodeIdx == j) continue;
-                int newFirstKey = keyFirst(kv.first) | keyExist; // get the new key
-		        if (newFirstKey == keyFirst(kv.first) || graph[lastNodeIdx][j] == INF) continue; // already in path or infinity
-                auto key = genKey(newFirstKey, j);
+                int nodesBinaryIdx = getNodesIdx(kv.first) | keyExist; // get the new key
+		        if (nodesBinaryIdx == getNodesIdx(kv.first) || graph[lastNodeIdx][j] == INF) continue; // already in path or infinity
+                auto key = genKey(j, nodesBinaryIdx);
                 int sum = kv.second.first + graph[lastNodeIdx][j];
 
                 auto prevIt = newCache.find(key);
@@ -66,7 +66,7 @@ std::pair<int, vector<int> > optimal_path(const Matrix& graph) {
     int totalDist = INF;
     int minKey;
     for(auto& kv : cache) {
-        int lastNodeIdx = keySecond(kv.first);
+        int lastNodeIdx = getLastNodeIdx(kv.first);
         if (graph[lastNodeIdx][0]==INF) continue;
         int total = kv.second.first + graph[lastNodeIdx][0];
         if (total >= totalDist) continue;
