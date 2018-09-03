@@ -23,7 +23,6 @@ bool propagateColoring(const vector<vector<int> >& graph, vector<string>& availa
     for(auto u : graph[v]) {
         if (recoloring[u] > 0) continue;
         auto& vec = availableColors[u];
-        removeColor(vec, color);
         // cout << "propagateColoring v=" << v << ", recoloring=" << recoloring << ", availablecolors=" << availableColors[v] << ", u=" << u << ", available colors=" << availableColors[u] << endl;
         if (vec.size() == 0 ) {
             return false;
