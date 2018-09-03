@@ -5,58 +5,65 @@
 #include <algorithm>
 using namespace std;
 
-struct comp {
-    comp(vector<vector<int> >* graph) { this->graph = graph; }
-
-    bool operator() (const int i, const int j){
-        return (*graph)[i].size() > (*graph)[j].size(); 
+void removeColor(string& availableColors, char c) {
+    string res;
+    for(auto item : availableColors) {
+        if (c!= item) res.push_back(item);
     }
+    availableColors.swap(res);
+}
 
-    vector<vector<int> >* graph;
-};
+bool propagateColoring(const vector<vector<int> >& graph, vector<string>& availableColors, string& recoloring, int v, char color) {
+    if (recoloring[v] > 0) return true;
 
-bool dfs(const vector<vector<int> >& graph, vector<int>& recoloring, vector<vector<bool> >& colorUsage, int v) {
-    if (recoloring[v] >= 0) return true;
+    recoloring[v] = color;
+    removeColor(availableColors[v], color);
+    for(auto u : graph[v]) {
+        if (recoloring[u] > 0) continue;
+        auto& vec = availableColors[u];
+        removeColor(vec, color);
+        cout << "propagateColoring v=" << v << ", recoloring=" << recoloring << ", availablecolors=" << availableColors[v] << ", u=" << u << ", available colors=" << availableColors[u] << endl;
+        if (vec.size() == 0 ) {
+            return false;
+        } else if (vec.size() == 1) {
+            if (propagateColoring(graph, availableColors, recoloring, u, vec[0]) == false) return false;
+        }
+    }
+    return true;
+}
+
+bool dfs(const vector<vector<int> >& graph, vector<string>& availableColors, string& recoloring, int v) {
+    if (recoloring[v] > 0) return true;
+    if (availableColors[v].size() == 0) return false;
 
     // make a copy of coloring states, in case no color solutions can be found
-    vector<int> bakRecoloring = recoloring;
-    vector<vector<bool> > bakColorUsage = colorUsage;
+    string bakRecoloring = recoloring;
+    vector<string> bakAvailableColors = availableColors;
 
-    // update node v's available coloring options, according to it's connected nodes' colors
-    vector<bool> colorUsed = colorUsage[v];
-    vector<int> unUsedColors;
-    for(int i = 0; i < 3; i++) {
-        if (!colorUsed[i]) unUsedColors.push_back(i);
-    }
-    
-    // cannot find an available color for node v
-    if (unUsedColors.size() == 0) return false;
 
-    // try un-used colors one by one
-    for(auto c : unUsedColors) {
-        recoloring[v] = c;
-        colorUsage[v][c] = true;
-        for(auto u : graph[v]) colorUsage[u][c] = true;
+    for(auto c : availableColors[v]) {
+        cout << "v=" << v << ", recoloring=" << recoloring << ", available=" << availableColors[v] << ", c=" << c << endl;
+        if (propagateColoring(graph, availableColors, recoloring, v, c) == false) {
+            recoloring = bakRecoloring;
+            availableColors = bakAvailableColors;
+            continue;
+        }
+        cout << "after propagate, v=" << v << endl;
         bool allTrue = true;
         for(auto u : graph[v]) {
-            if (false == dfs(graph, recoloring, colorUsage, u)) {  // if any of the next node cannot be colored, try next solution
+            if (dfs(graph, availableColors, recoloring, u) == false) {
                 allTrue = false;
                 break;
             }
         }
-
-        // all next nodes are colored successfully
         if (allTrue) {
-            return true; 
-        } else {  // recover the color usage
-            colorUsage[v][c] = false;
-            for(auto u : graph[v]) colorUsage[u][c] = false; 
-        } 
+            return true;
+        } else {
+            recoloring = bakRecoloring;
+            availableColors = bakAvailableColors;
+        }
     }
 
-    // recover coloring states when the solution doesn't work
-    recoloring = bakRecoloring;
-    colorUsage = bakColorUsage;
     return false;
 }
 
@@ -70,32 +77,23 @@ bool dfs(const vector<vector<int> >& graph, vector<int>& recoloring, vector<vect
     * Otherwise, return value is an empty string.
 */
 string assign_new_colors(int n, vector<pair<int, int>> edges, string colors) {
-    map<char, int> colorMap;
-    colorMap['R'] = 0;
-    colorMap['G'] = 1;
-    colorMap['B'] = 2;
-    vector<vector<bool> > colorUsage(n, vector<bool>(3, false));
     vector<vector<int> > graph(n, vector<int>());
     for(const auto& e: edges){
         graph[e.first-1].push_back(e.second-1);
         graph[e.second-1].push_back(e.first-1);
     }
 
-    auto cmp = comp(&graph);
-    for(auto& out : graph) {
-        sort(out.begin(), out.end(), cmp);
-    }
-    vector<int> idxs(n, 0);
-    for(int i = 0; i < n; i++) idxs[i] = i;
-    sort(idxs.begin(), idxs.end(), cmp);
+    // update available color table
+    vector<string> availableColors(n, "RGB");
+    for(int i = 0; i < n; i++) removeColor(availableColors[i], colors[i]);
+    string recoloring(n, 0);
 
-    for(size_t i = 0; i < n; i++) colorUsage[i][colorMap[colors[i]]] = true;
-    vector<int> recoloring(n, -1);
-    
-    string result;
-    for(auto idx : idxs) if (false == dfs(graph, recoloring, colorUsage, idx)) return "";
-    for(int i = 0; i < n; i++) result.push_back("RGB"[recoloring[i]]);
-    return result;
+    for(int i = 0; i < n; i++) {
+        if (dfs(graph, availableColors, recoloring, i) == false) {
+            return "";
+        }
+    }
+    return recoloring;
 }
 
 int main() {
