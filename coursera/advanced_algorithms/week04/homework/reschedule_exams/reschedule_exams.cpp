@@ -18,11 +18,13 @@ bool propagateColoring(const vector<vector<int> >& graph, vector<string>& availa
 
     recoloring[v] = color;
     removeColor(availableColors[v], color);
+    for(auto u : graph[v]) removeColor(availableColors[u], color);
+
     for(auto u : graph[v]) {
         if (recoloring[u] > 0) continue;
         auto& vec = availableColors[u];
         removeColor(vec, color);
-        cout << "propagateColoring v=" << v << ", recoloring=" << recoloring << ", availablecolors=" << availableColors[v] << ", u=" << u << ", available colors=" << availableColors[u] << endl;
+        // cout << "propagateColoring v=" << v << ", recoloring=" << recoloring << ", availablecolors=" << availableColors[v] << ", u=" << u << ", available colors=" << availableColors[u] << endl;
         if (vec.size() == 0 ) {
             return false;
         } else if (vec.size() == 1) {
@@ -42,13 +44,13 @@ bool dfs(const vector<vector<int> >& graph, vector<string>& availableColors, str
 
 
     for(auto c : availableColors[v]) {
-        cout << "v=" << v << ", recoloring=" << recoloring << ", available=" << availableColors[v] << ", c=" << c << endl;
+        // cout << "v=" << v << ", recoloring=" << recoloring << ", available=" << availableColors[v] << ", c=" << c << endl;
         if (propagateColoring(graph, availableColors, recoloring, v, c) == false) {
             recoloring = bakRecoloring;
             availableColors = bakAvailableColors;
             continue;
         }
-        cout << "after propagate, v=" << v << endl;
+        // cout << "after propagate, v=" << v << endl;
         bool allTrue = true;
         for(auto u : graph[v]) {
             if (dfs(graph, availableColors, recoloring, u) == false) {
