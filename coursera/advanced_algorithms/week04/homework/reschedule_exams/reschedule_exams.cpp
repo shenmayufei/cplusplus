@@ -10,7 +10,7 @@ void removeColor(string& availableColors, char c) {
     for(auto item : availableColors) {
         if (c!= item) res.push_back(item);
     }
-    availableColors.swap(res);
+    if (availableColors.size() != res.size())  availableColors.swap(res);
 }
 
 bool propagateColoring(const vector<vector<int> >& graph, vector<string>& availableColors, string& recoloring, int v, char color) {
@@ -80,6 +80,7 @@ bool dfs(const vector<vector<int> >& graph, vector<string>& availableColors, str
 string assign_new_colors(int n, vector<pair<int, int>> edges, string colors) {
     vector<vector<int> > graph(n, vector<int>());
     for(const auto& e: edges){
+        if (e.first == e.second) return "";
         graph[e.first-1].push_back(e.second-1);
         graph[e.second-1].push_back(e.first-1);
     }
